@@ -6,8 +6,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
-import java.util.UnknownFormatConversionException;
-
 import net.lax1dude.eaglercraft.sp.ipc.IPCPacket0CPlayerChannel;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.src.INetworkManager;
@@ -15,7 +13,6 @@ import net.minecraft.src.NetHandler;
 import net.minecraft.src.NetLoginHandler;
 import net.minecraft.src.NetServerHandler;
 import net.minecraft.src.Packet;
-import net.minecraft.src.Packet204ClientInfo;
 
 public class WorkerNetworkManager implements INetworkManager {
 	
@@ -25,7 +22,7 @@ public class WorkerNetworkManager implements INetworkManager {
 	private boolean isAlive;
 	private WorkerListenThread listenThread;
 	
-	private LinkedList<byte[]> frags = new LinkedList();
+	private LinkedList<byte[]> frags = new LinkedList<>();
 	
 	public WorkerNetworkManager(String ipcChannel, MinecraftServer srv, WorkerListenThread th) {
 		this.ipcChannel = ipcChannel;

@@ -178,7 +178,7 @@ public class RenderPlayer extends RenderLiving {
 			
 			if(msh.headModel != null) {
 				if(msh == HighPolySkin.BABY_CHARLES) {
-					long millis = System.currentTimeMillis();
+					long millis = EaglerAdapter.steadyTimeMillis();
 					float partialTicks = (float) ((millis - par1EntityPlayer.eaglerHighPolyAnimationTick) * 0.02);
 					//long l50 = millis / 50l * 50l;
 					//boolean runTick = par1EntityPlayer.eaglerHighPolyAnimationTick < l50 && millis >= l50;

@@ -155,7 +155,7 @@ public class SoundManager {
 			String path = "/records/" + par1Str.replace('.', '/') + ".mp3";
 			int snd = EaglerAdapter.beginPlayback(path, par2, par3, par4, 1.0F, 1.0F, music);
 			if (snd != -1) {
-				activerecords.add(new Integer(snd));
+				activerecords.add(Integer.valueOf(snd));
 			} else {
 				System.err.println("unregistered record: "+par1Str);
 			}

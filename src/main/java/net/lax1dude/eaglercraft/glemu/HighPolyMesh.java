@@ -1,8 +1,7 @@
 package net.lax1dude.eaglercraft.glemu;
 
-import static net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.*;
+import static net.lax1dude.eaglercraft.EaglerAdapter.*;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -10,6 +9,7 @@ import java.nio.IntBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import net.lax1dude.eaglercraft.EaglerInputStream;
 import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.BufferArrayGL;
 import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.BufferGL;
 import net.minecraft.src.GLAllocation;
@@ -44,7 +44,7 @@ public class HighPolyMesh {
 	static final byte[] headerSequence = "!EAG%mdl".getBytes(StandardCharsets.UTF_8);
 	
 	static HighPolyMesh loadMeshData(byte[] mesh) throws IOException {
-		DataInputStream mdlIn = new DataInputStream(new ByteArrayInputStream(mesh));
+		DataInputStream mdlIn = new DataInputStream(new EaglerInputStream(mesh));
 		
 		byte[] hd = new byte[headerSequence.length];
 		mdlIn.read(hd);
@@ -88,7 +88,7 @@ public class HighPolyMesh {
 		}
 		
 		BufferArrayGL vertexArray = _wglCreateVertexArray();
-		_wglBindVertexArray(vertexArray);
+		_wglBindVertexArray0(vertexArray);
 
 		up1.position(0).limit(intsOfVertex);
 		

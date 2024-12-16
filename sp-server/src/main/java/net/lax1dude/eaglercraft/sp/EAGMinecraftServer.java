@@ -2,6 +2,7 @@ package net.lax1dude.eaglercraft.sp;
 
 import java.io.IOException;
 
+import net.lax1dude.eaglercraft.sp.ipc.IPCPacket14StringList;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.src.EnumGameType;
 import net.minecraft.src.ILogAgent;
@@ -15,6 +16,9 @@ public class EAGMinecraftServer extends MinecraftServer {
 	protected WorkerListenThread listenThreadImpl;
 	protected WorldSettings newWorldSettings;
 	protected boolean paused;
+	private int tpsCounter = 0;
+	private int tpsMeasure = 0;
+	private long tpsTimer = 0l;
 
 	public EAGMinecraftServer(String world, String owner, WorldSettings currentWorldSettings) {
 		super(world);
@@ -36,12 +40,21 @@ public class EAGMinecraftServer extends MinecraftServer {
 	}
 	
 	public void mainLoop() {
+		long ctm = SysUtil.steadyTimeMillis();
+		
+		long elapsed = ctm - tpsTimer;
+		if(elapsed >= 1000l) {
+			tpsTimer = ctm;
+			tpsMeasure = tpsCounter;
+			IntegratedServer.sendIPCPacket(new IPCPacket14StringList(IPCPacket14StringList.SERVER_TPS, getTPSAndChunkBuffer(tpsMeasure)));
+			tpsCounter = 0;
+		}
+		
 		if(paused && this.playersOnline.size() <= 1) {
-			lastTick = System.currentTimeMillis();
+			lastTick = ctm;
 			return;
 		}
 		
-		long ctm = System.currentTimeMillis();
 		long delta = ctm - lastTick;
 		
 		if (delta > 2000L && ctm - this.timeOfLastWarning >= 15000L) {
@@ -57,21 +70,14 @@ public class EAGMinecraftServer extends MinecraftServer {
 		
 		if (this.worldServers[0].areAllPlayersAsleep()) {
 			this.tick();
-			lastTick = System.currentTimeMillis();
+			++tpsCounter;
+			lastTick = SysUtil.steadyTimeMillis();
 		} else {
-			boolean mustYield = false;
-			while (delta >= 50L) {
-				if(mustYield) {
-					try {
-						Thread.sleep(1l); // allow some async
-					}catch(InterruptedException e) {
-						System.err.println("you eagler");
-					}
-				}
+			if (delta > 50l) {
 				delta -= 50L;
-				lastTick = System.currentTimeMillis();
+				lastTick += 50l;
 				this.tick();
-				mustYield = true;
+				++tpsCounter;
 			}
 		}
 		
@@ -80,7 +86,7 @@ public class EAGMinecraftServer extends MinecraftServer {
 	public void setPaused(boolean p) {
 		paused = p;
 		if(!p) {
-			lastTick = System.currentTimeMillis();
+			lastTick = SysUtil.steadyTimeMillis();
 		}
 	}
 	
@@ -93,7 +99,7 @@ public class EAGMinecraftServer extends MinecraftServer {
 		SkinsPlugin.reset();
 		VoiceChatPlugin.reset();
 		this.loadAllWorlds(folderName, 0l, newWorldSettings);
-		this.lastTick = System.currentTimeMillis();
+		this.lastTick = SysUtil.steadyTimeMillis();
 		return true;
 	}
 

@@ -340,7 +340,7 @@ public class GuiVoiceMenu extends GuiScreen  {
 				}
 				
 			}else if(status == Voice.VoiceStatus.CONNECTING) {
-				float fadeTimer = MathHelper.sin((float)((System.currentTimeMillis() % 700l) * 0.0014d) * 3.14159f) * 0.35f + 0.3f;
+				float fadeTimer = MathHelper.sin((float)((EaglerAdapter.steadyTimeMillis() % 700l) * 0.0014d) * 3.14159f) * 0.35f + 0.3f;
 				txt = ts.translateKey("voice.connecting");
 				EaglerAdapter.glEnable(EaglerAdapter.GL_BLEND);
 				EaglerAdapter.glBlendFunc(EaglerAdapter.GL_SRC_ALPHA, EaglerAdapter.GL_ONE_MINUS_SRC_ALPHA);

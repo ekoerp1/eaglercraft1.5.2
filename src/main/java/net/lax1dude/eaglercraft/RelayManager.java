@@ -15,7 +15,7 @@ import net.minecraft.src.NBTTagList;
 
 public class RelayManager {
 	
-	private final List<RelayServer> relays = new ArrayList();
+	private final List<RelayServer> relays = new ArrayList<>();
 	private long lastPingThrough = 0l;
 	
 	public void load(NBTTagList relayConfig) {
@@ -94,7 +94,7 @@ public class RelayManager {
 	}
 	
 	public void ping() {
-		lastPingThrough = System.currentTimeMillis();
+		lastPingThrough = EaglerAdapter.steadyTimeMillis();
 		for(int i = 0, l = relays.size(); i < l; ++i) {
 			relays.get(i).ping();
 		}
@@ -211,16 +211,10 @@ public class RelayManager {
 							return null;
 						}
 					}
-					try {
-						Thread.sleep(20l);
-					} catch (InterruptedException e) {
-					}
+					EaglerAdapter.sleep(20);
 				}
 			}
-			try {
-				Thread.sleep(20l);
-			} catch (InterruptedException e) {
-			}
+			EaglerAdapter.sleep(20);
 		}
 		System.err.println("Relay [" + relay.address + "] connection failed!");
 		Throwable t;
@@ -230,12 +224,12 @@ public class RelayManager {
 		return null;
 	}
 	
-	private final List<RelayServer> brokenServers = new LinkedList();
+	private final List<RelayServer> brokenServers = new LinkedList<>();
 
 	public RelayServerSocket getWorkingRelay(Consumer<String> progressCallback, int type, String code) {
 		brokenServers.clear();
 		if(relays.size() > 0) {
-			long millis = System.currentTimeMillis();
+			long millis = EaglerAdapter.steadyTimeMillis();
 			if(millis - lastPingThrough < 10000l) {
 				RelayServer relay = getPrimary();
 				if(relay.getPing() > 0l && relay.getPingCompatible().isCompatible()) {

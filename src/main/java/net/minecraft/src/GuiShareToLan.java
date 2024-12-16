@@ -41,17 +41,17 @@ public class GuiShareToLan extends GuiScreen {
 	 */
 	public void initGui() {
 		this.buttonList.clear();
-		this.buttonList.add(new GuiButton(101, this.width / 2 - 155, this.height - 28, 150, 20,
+		this.buttonList.add(new GuiButton(101, this.width / 2 - 155, this.height - 28, 140, 20,
 				StatCollector.translateToLocal("lanServer.start")));
-		this.buttonList.add(new GuiButton(102, this.width / 2 + 5, this.height - 28, 150, 20,
+		this.buttonList.add(new GuiButton(102, this.width / 2 + 5, this.height - 28, 140, 20,
 				StatCollector.translateToLocal("gui.cancel")));
-		this.buttonList.add(this.buttonGameMode = new GuiButton(104, this.width / 2 - 155, 160, 150, 20,
+		this.buttonList.add(this.buttonGameMode = new GuiButton(104, this.width / 2 - 155, 135, 140, 20,
 				StatCollector.translateToLocal("selectWorld.gameMode")));
-		this.buttonList.add(this.buttonAllowCommandsToggle = new GuiButton(103, this.width / 2 + 5, 160, 150, 20,
+		this.buttonList.add(this.buttonAllowCommandsToggle = new GuiButton(103, this.width / 2 + 5, 135, 140, 20,
 				StatCollector.translateToLocal("selectWorld.allowCommands")));
-		this.buttonList.add(this.buttonHiddenToggle = new GuiButton(105, this.width / 2 - 75, 190, 150, 20,
+		this.buttonList.add(this.buttonHiddenToggle = new GuiButton(105, this.width / 2 - 75, 165, 140, 20,
 				StatCollector.translateToLocal("lanServer.hidden")));
-		this.codeTextField = new GuiTextField(this.fontRenderer, this.width / 2 - 100, 100, 200, 20);
+		this.codeTextField = new GuiTextField(this.fontRenderer, this.width / 2 - 100, 80, 200, 20);
 		this.codeTextField.setText(mc.thePlayer.username + "'s World");
 		this.codeTextField.setFocused(true);
 		this.codeTextField.setMaxStringLength(252);
@@ -135,11 +135,13 @@ public class GuiShareToLan extends GuiScreen {
 	public void drawScreen(int par1, int par2, float par3) {
 		this.drawDefaultBackground();
 		this.drawCenteredString(this.fontRenderer, StatCollector.translateToLocal("lanServer.title"), this.width / 2,
-				50, 16777215);
+				35, 16777215);
 		this.drawCenteredString(this.fontRenderer, StatCollector.translateToLocal("lanServer.worldName"), this.width / 2,
-				82, 16777215);
+				62, 16777215);
 		this.drawCenteredString(this.fontRenderer, StatCollector.translateToLocal("lanServer.otherPlayers"),
-				this.width / 2, 142, 16777215);
+				this.width / 2, 112, 16777215);
+		this.drawCenteredString(this.fontRenderer, StatCollector.translateToLocal("lanServer.ipGrabNote"),
+				this.width / 2, 195, 16777215);
 		super.drawScreen(par1, par2, par3);
 		this.relaysButton.drawScreen(par1, par2);
 		this.codeTextField.drawTextBox();

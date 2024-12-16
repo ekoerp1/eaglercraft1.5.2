@@ -49,6 +49,7 @@ public class GameSettings {
 	public boolean snooperEnabled = false;
 	public boolean fullScreen = false;
 	public boolean enableVsync = true;
+	public boolean hideVsyncWarning = false;
 	public boolean hideServerAddress = false;
 
 	/**
@@ -367,6 +368,10 @@ public class GameSettings {
 			this.mc.sndManager.stopAllSounds();
 		}
 
+		if (par1EnumOptions == EnumOptions.VSYNC) {
+			this.enableVsync = !this.enableVsync;
+		}
+
 		this.saveOptions();
 	}
 
@@ -394,7 +399,7 @@ public class GameSettings {
 			return this.anaglyph;
 
 		case 4:
-			return this.advancedOpengl;
+			return this.enableVsync;
 
 		case 5:
 			return this.clouds;
@@ -545,6 +550,9 @@ public class GameSettings {
 			if(yee.hasKey("hideJoinCode")) hideJoinCode = yee.getBoolean("hideJoinCode");
 			if(yee.hasKey("relayTimeout")) relayTimeout = yee.getByte("relayTimeout");
 			if(yee.hasKey("adderall")) adderall = yee.getBoolean("adderall");
+			if(yee.hasKey("skin")) skin = yee.getString("skin");
+			if(yee.hasKey("enableVsync")) enableVsync = yee.getBoolean("enableVsync");
+			if(yee.hasKey("hideVsyncWarning")) hideVsyncWarning = yee.getBoolean("hideVsyncWarning");
 			
 			if(voiceListenRadius < 5) voiceListenRadius = 5;
 			else if(voiceListenRadius > 22) voiceListenRadius = 22;
@@ -626,6 +634,9 @@ public class GameSettings {
 		yee.setBoolean("hideJoinCode", hideJoinCode);
 		yee.setByte("relayTimeout", (byte)relayTimeout);
 		yee.setBoolean("adderall", adderall);
+		yee.setString("skin", skin);
+		yee.setBoolean("enableVsync", enableVsync);
+		yee.setBoolean("hideVsyncWarning", hideVsyncWarning);
 		
 		for (int var4 = 0; var4 < this.keyBindings.length; ++var4) {
 			yee.setInteger(keyBindings[var4].keyDescription, keyBindings[var4].keyCode);

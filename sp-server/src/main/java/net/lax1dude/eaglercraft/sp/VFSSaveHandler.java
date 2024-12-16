@@ -17,7 +17,7 @@ public class VFSSaveHandler implements ISaveHandler, IPlayerFileData {
 	
 	public final VFile worldDirectory;
 	
-	private final HashMap<Integer, VFSChunkLoader> chunkLoaders = new HashMap();
+	private final HashMap<Integer, VFSChunkLoader> chunkLoaders = new HashMap<>();
 	
 	public VFSSaveHandler(VFile worldDirectory) {
 		this.worldDirectory = worldDirectory;

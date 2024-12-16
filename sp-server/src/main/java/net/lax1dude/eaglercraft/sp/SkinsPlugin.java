@@ -10,9 +10,9 @@ import net.minecraft.src.Packet250CustomPayload;
 
 public class SkinsPlugin {
 	
-	private static final HashMap<String,byte[]> skinCollection = new HashMap();
-	private static final HashMap<String,byte[]> capeCollection = new HashMap();
-	private static final HashMap<String,Long> lastSkinLayerUpdate = new HashMap();
+	private static final HashMap<String,byte[]> skinCollection = new HashMap<>();
+	private static final HashMap<String,byte[]> capeCollection = new HashMap<>();
+	private static final HashMap<String,Long> lastSkinLayerUpdate = new HashMap<>();
 
 	private static final int[] SKIN_DATA_SIZE = new int[] { 64*32*4, 64*64*4, -9, -9, 1, 64*64*4, -9 }; // 128 pixel skins crash clients
 	private static final int[] CAPE_DATA_SIZE = new int[] { 32*32*4, -9, 1 };
@@ -60,7 +60,7 @@ public class SkinsPlugin {
 					return true;
 				}
 				if("EAG|SkinLayers".equals(payload.channel)) {
-					long millis = System.currentTimeMillis();
+					long millis = SysUtil.steadyTimeMillis();
 					Long lsu = lastSkinLayerUpdate.get(user);
 					if(lsu != null && millis - lsu < 700L) { // DoS protection
 						return true;

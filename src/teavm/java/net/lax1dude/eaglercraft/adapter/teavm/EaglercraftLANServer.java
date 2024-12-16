@@ -6,10 +6,6 @@ import org.teavm.jso.typedarrays.ArrayBuffer;
 
 public interface EaglercraftLANServer extends JSObject {
 
-	final int PEERSTATE_FAILED = 0;
-	final int PEERSTATE_SUCCESS = 1;
-	final int PEERSTATE_LOADING = 2;
-	
 	boolean LANServerSupported();
 	
 	void initializeServer();
@@ -28,18 +24,6 @@ public interface EaglercraftLANServer extends JSObject {
 	
 	void sendPacketToRemoteClient(String peerId, ArrayBuffer buffer);
 
-	void resetPeerStates();
-
-	int getPeerState();
-
-	int getPeerStateConnect();
-
-	int getPeerStateInitial();
-
-	int getPeerStateDesc();
-
-	int getPeerStateIce();
-	
 	void signalRemoteConnect(String peerId);
 	
 	void signalRemoteDescription(String peerId, String descJSON);

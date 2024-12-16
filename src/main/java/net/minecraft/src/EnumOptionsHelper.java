@@ -23,6 +23,12 @@ class EnumOptionsHelper {
 		}
 
 		try {
+			enumOptionsMappingHelperArray[EnumOptions.VSYNC.ordinal()] = 4;
+		} catch (NoSuchFieldError var10) {
+			;
+		}
+
+		try {
 			enumOptionsMappingHelperArray[EnumOptions.RENDER_CLOUDS.ordinal()] = 5;
 		} catch (NoSuchFieldError var10) {
 			;

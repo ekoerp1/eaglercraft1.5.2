@@ -35,7 +35,7 @@ public class VFile {
 	protected String path;
 	
 	public static String createPath(Object... p) {
-		ArrayList<String> r = new ArrayList();
+		ArrayList<String> r = new ArrayList<>();
 		for(int i = 0; i < p.length; ++i) {
 			if(p[i] == null) {
 				continue;
@@ -106,7 +106,7 @@ public class VFile {
 		if(path == null) {
 			return null;
 		}
-		int i = path.indexOf(pathSeperator);
+		int i = path.lastIndexOf(pathSeperator);
 		return i == -1 ? path : path.substring(i + 1);
 	}
 	

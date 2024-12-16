@@ -25,7 +25,7 @@ public class TileEntityBeaconRenderer extends TileEntitySpecialRenderer {
 			EaglerAdapter.glDisable(EaglerAdapter.GL_ALPHA_TEST);
 			EaglerAdapter.glDepthMask(true);
 			EaglerAdapter.glBlendFunc(EaglerAdapter.GL_SRC_ALPHA, EaglerAdapter.GL_ONE);
-			float var11 = ((System.currentTimeMillis() % 200000) / 50.0f);//par1TileEntityBeacon.getWorldObj().getWorldTime() + par8;
+			float var11 = ((EaglerAdapter.steadyTimeMillis() % 200000) / 50.0f);//par1TileEntityBeacon.getWorldObj().getWorldTime() + par8;
 			float var12 = -var11 * 0.2F - (float) MathHelper.floor_float(-var11 * 0.1F);
 			byte var13 = 1;
 			double var14 = (double) var11 * 0.025D * (1.0D - (double) (var13 & 1) * 2.5D);

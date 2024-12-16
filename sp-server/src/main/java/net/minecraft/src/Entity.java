@@ -327,8 +327,6 @@ public abstract class Entity {
 	 * Gets called every tick from main Entity class
 	 */
 	public void onEntityUpdate() {
-		this.worldObj.theProfiler.startSection("entityBaseTick");
-
 		if (this.ridingEntity != null && this.ridingEntity.isDead) {
 			this.ridingEntity = null;
 		}
@@ -342,7 +340,6 @@ public abstract class Entity {
 		int var2;
 
 		if (!this.worldObj.isRemote && this.worldObj instanceof WorldServer) {
-			this.worldObj.theProfiler.startSection("portal");
 			MinecraftServer var1 = ((WorldServer) this.worldObj).getMinecraftServer();
 			var2 = this.getMaxInPortalTime();
 
@@ -377,8 +374,6 @@ public abstract class Entity {
 			if (this.timeUntilPortal > 0) {
 				--this.timeUntilPortal;
 			}
-
-			this.worldObj.theProfiler.endSection();
 		}
 
 		if (this.isSprinting() && !this.isInWater()) {
@@ -432,7 +427,6 @@ public abstract class Entity {
 		}
 
 		this.firstUpdate = false;
-		this.worldObj.theProfiler.endSection();
 	}
 
 	/**
@@ -500,7 +494,6 @@ public abstract class Entity {
 			this.posY = this.boundingBox.minY + (double) this.yOffset - (double) this.ySize;
 			this.posZ = (this.boundingBox.minZ + this.boundingBox.maxZ) / 2.0D;
 		} else {
-			this.worldObj.theProfiler.startSection("move");
 			this.ySize *= 0.4F;
 			double var7 = this.posX;
 			double var9 = this.posY;
@@ -688,8 +681,6 @@ public abstract class Entity {
 				}
 			}
 
-			this.worldObj.theProfiler.endSection();
-			this.worldObj.theProfiler.startSection("rest");
 			this.posX = (this.boundingBox.minX + this.boundingBox.maxX) / 2.0D;
 			this.posY = this.boundingBox.minY + (double) this.yOffset - (double) this.ySize;
 			this.posZ = (this.boundingBox.minZ + this.boundingBox.maxZ) / 2.0D;
@@ -780,8 +771,6 @@ public abstract class Entity {
 				this.playSound("random.fizz", 0.7F, 1.6F + (this.rand.nextFloat() - this.rand.nextFloat()) * 0.4F);
 				this.fire = -this.fireResistance;
 			}
-
-			this.worldObj.theProfiler.endSection();
 		}
 	}
 
@@ -1899,7 +1888,6 @@ public abstract class Entity {
 
 	public void travelToTheEnd(int par1) {
 		if (!this.worldObj.isRemote && !this.isDead) {
-			this.worldObj.theProfiler.startSection("changeDimension");
 			MinecraftServer var2 = MinecraftServer.getServer();
 			int var3 = this.dimension;
 			WorldServer var4 = var2.worldServerForDimension(var3);
@@ -1907,9 +1895,7 @@ public abstract class Entity {
 			this.dimension = par1;
 			this.worldObj.removeEntity(this);
 			this.isDead = false;
-			this.worldObj.theProfiler.startSection("reposition");
 			var2.getConfigurationManager().transferEntityToWorld(this, var3, var4, var5);
-			this.worldObj.theProfiler.endStartSection("reloading");
 			Entity var6 = EntityList.createEntityByName(EntityList.getEntityString(this), var5);
 
 			if (var6 != null) {
@@ -1918,10 +1904,8 @@ public abstract class Entity {
 			}
 
 			this.isDead = true;
-			this.worldObj.theProfiler.endSection();
 			var4.resetUpdateEntityTick();
 			var5.resetUpdateEntityTick();
-			this.worldObj.theProfiler.endSection();
 		}
 	}
 

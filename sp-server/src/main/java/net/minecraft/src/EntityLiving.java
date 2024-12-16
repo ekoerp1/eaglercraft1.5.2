@@ -227,10 +227,8 @@ public abstract class EntityLiving extends Entity {
 	public EntityLiving(World par1World) {
 		super(par1World);
 		this.preventEntitySpawning = true;
-		this.tasks = new EntityAITasks(
-				par1World != null && par1World.theProfiler != null ? par1World.theProfiler : null);
-		this.targetTasks = new EntityAITasks(
-				par1World != null && par1World.theProfiler != null ? par1World.theProfiler : null);
+		this.tasks = new EntityAITasks();
+		this.targetTasks = new EntityAITasks();
 		this.lookHelper = new EntityLookHelper(this);
 		this.moveHelper = new EntityMoveHelper(this);
 		this.jumpHelper = new EntityJumpHelper(this);
@@ -486,7 +484,6 @@ public abstract class EntityLiving extends Entity {
 	public void onEntityUpdate() {
 		this.prevSwingProgress = this.swingProgress;
 		super.onEntityUpdate();
-		this.worldObj.theProfiler.startSection("mobBaseTick");
 
 		if (this.isEntityAlive() && this.rand.nextInt(1000) < this.livingSoundTime++) {
 			this.livingSoundTime = -this.getTalkInterval();
@@ -570,7 +567,6 @@ public abstract class EntityLiving extends Entity {
 		this.prevRotationYawHead = this.rotationYawHead;
 		this.prevRotationYaw = this.rotationYaw;
 		this.prevRotationPitch = this.rotationPitch;
-		this.worldObj.theProfiler.endSection();
 	}
 
 	/**
@@ -731,7 +727,6 @@ public abstract class EntityLiving extends Entity {
 		}
 
 		this.field_70766_av += (var8 - this.field_70766_av) * 0.3F;
-		this.worldObj.theProfiler.startSection("headTurn");
 
 		if (this.isAIEnabled()) {
 			this.bodyHelper.func_75664_a();
@@ -759,9 +754,6 @@ public abstract class EntityLiving extends Entity {
 				var7 *= -1.0F;
 			}
 		}
-
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("rangeChecks");
 
 		while (this.rotationYaw - this.prevRotationYaw < -180.0F) {
 			this.prevRotationYaw -= 360.0F;
@@ -795,7 +787,6 @@ public abstract class EntityLiving extends Entity {
 			this.prevRotationYawHead += 360.0F;
 		}
 
-		this.worldObj.theProfiler.endSection();
 		this.field_70764_aw += var7;
 	}
 
@@ -1482,8 +1473,6 @@ public abstract class EntityLiving extends Entity {
 			this.motionZ = 0.0D;
 		}
 
-		this.worldObj.theProfiler.startSection("ai");
-
 		if (this.isMovementBlocked()) {
 			this.isJumping = false;
 			this.moveStrafing = 0.0F;
@@ -1491,19 +1480,12 @@ public abstract class EntityLiving extends Entity {
 			this.randomYawVelocity = 0.0F;
 		} else if (this.isClientWorld()) {
 			if (this.isAIEnabled()) {
-				this.worldObj.theProfiler.startSection("newAi");
 				this.updateAITasks();
-				this.worldObj.theProfiler.endSection();
 			} else {
-				this.worldObj.theProfiler.startSection("oldAi");
 				this.updateEntityActionState();
-				this.worldObj.theProfiler.endSection();
 				this.rotationYawHead = this.rotationYaw;
 			}
 		}
-
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("jump");
 
 		if (this.isJumping) {
 			if (!this.isInWater() && !this.handleLavaMovement()) {
@@ -1518,8 +1500,6 @@ public abstract class EntityLiving extends Entity {
 			this.jumpTicks = 0;
 		}
 
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("travel");
 		this.moveStrafing *= 0.98F;
 		this.moveForward *= 0.98F;
 		this.randomYawVelocity *= 0.9F;
@@ -1527,15 +1507,10 @@ public abstract class EntityLiving extends Entity {
 		this.landMovementFactor *= this.getSpeedModifier();
 		this.moveEntityWithHeading(this.moveStrafing, this.moveForward);
 		this.landMovementFactor = var11;
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("push");
 
 		if (!this.worldObj.isRemote) {
 			this.func_85033_bc();
 		}
-
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("looting");
 
 		if (!this.worldObj.isRemote && this.canPickUpLoot() && !this.dead
 				&& this.worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing")) {
@@ -1604,8 +1579,6 @@ public abstract class EntityLiving extends Entity {
 				}
 			}
 		}
-
-		this.worldObj.theProfiler.endSection();
 	}
 
 	protected void func_85033_bc() {
@@ -1706,33 +1679,15 @@ public abstract class EntityLiving extends Entity {
 
 	protected void updateAITasks() {
 		++this.entityAge;
-		this.worldObj.theProfiler.startSection("checkDespawn");
 		this.despawnEntity();
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("sensing");
 		this.senses.clearSensingCache();
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("targetSelector");
 		this.targetTasks.onUpdateTasks();
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("goalSelector");
 		this.tasks.onUpdateTasks();
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("navigation");
 		this.navigator.onUpdateNavigation();
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("mob tick");
 		this.updateAITick();
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.startSection("controls");
-		this.worldObj.theProfiler.startSection("move");
 		this.moveHelper.onUpdateMoveHelper();
-		this.worldObj.theProfiler.endStartSection("look");
 		this.lookHelper.onUpdateLook();
-		this.worldObj.theProfiler.endStartSection("jump");
 		this.jumpHelper.doJump();
-		this.worldObj.theProfiler.endSection();
-		this.worldObj.theProfiler.endSection();
 	}
 
 	/**

@@ -22,7 +22,7 @@ public class IPacket07LocalWorlds extends IPacket {
 	public final List<LocalWorld> worldsList;
 	
 	public IPacket07LocalWorlds() {
-		this.worldsList = new ArrayList();
+		this.worldsList = new ArrayList<>();
 	}
 
 	public void read(DataInputStream input) throws IOException {

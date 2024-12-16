@@ -433,7 +433,6 @@ public class ServerConfigurationManager {
 		double var13 = par1Entity.posY;
 		double var15 = par1Entity.posZ;
 		float var17 = par1Entity.rotationYaw;
-		par3WorldServer.theProfiler.startSection("moving");
 
 		if (par1Entity.dimension == -1) {
 			var5 /= var9;
@@ -472,10 +471,7 @@ public class ServerConfigurationManager {
 			}
 		}
 
-		par3WorldServer.theProfiler.endSection();
-
 		if (par2 != 1) {
-			par3WorldServer.theProfiler.startSection("placing");
 			var5 = (double) MathHelper.clamp_int((int) var5, -29999872, 29999872);
 			var7 = (double) MathHelper.clamp_int((int) var7, -29999872, 29999872);
 
@@ -486,8 +482,6 @@ public class ServerConfigurationManager {
 				par4WorldServer.updateEntityWithOptionalForce(par1Entity, false);
 				par4WorldServer.getDefaultTeleporter().placeInPortal(par1Entity, var11, var13, var15, var17);
 			}
-
-			par3WorldServer.theProfiler.endSection();
 		}
 
 		par1Entity.setWorld(par4WorldServer);

@@ -80,7 +80,7 @@ public class EntityDragon extends EntityLiving implements IBossDisplayData, IEnt
 
 	protected void entityInit() {
 		super.entityInit();
-		this.dataWatcher.addObject(16, new Integer(this.getMaxHealth()));
+		this.dataWatcher.addObject(16, Integer.valueOf(this.getMaxHealth()));
 	}
 
 	/**

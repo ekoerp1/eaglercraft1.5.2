@@ -7,7 +7,7 @@ import net.lax1dude.eaglercraft.EaglerAdapter;
 
 public class TexturePackDefault extends TexturePackImplementation {
 	public TexturePackDefault() {
-		super("default", "Default", (ITexturePack) null);
+		super("default", null, "Default", (ITexturePack) null);
 	}
 
 	/**
@@ -25,7 +25,7 @@ public class TexturePackDefault extends TexturePackImplementation {
 		return true;
 	}
 
-	protected InputStream func_98139_b(String par1Str) throws IOException {
+	protected InputStream func_98139_b(String par1Str) {
 		return EaglerAdapter.loadResource(par1Str);
 	}
 

@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import net.lax1dude.eaglercraft.DefaultSkinRenderer;
+import net.lax1dude.eaglercraft.EaglerAdapter;
 import net.minecraft.client.Minecraft;
 
 public abstract class EntityPlayer extends EntityLiving implements ICommandSender {
@@ -35,7 +36,7 @@ public abstract class EntityPlayer extends EntityLiving implements ICommandSende
 	public float cameraYaw;
 	public String username;
 
-	public long eaglerHighPolyAnimationTick = System.currentTimeMillis();
+	public long eaglerHighPolyAnimationTick = EaglerAdapter.steadyTimeMillis();
 	public float eaglerHighPolyAnimationFloat1 = 0.0f;
 	public float eaglerHighPolyAnimationFloat2 = 0.0f;
 	public float eaglerHighPolyAnimationFloat3 = 0.0f;

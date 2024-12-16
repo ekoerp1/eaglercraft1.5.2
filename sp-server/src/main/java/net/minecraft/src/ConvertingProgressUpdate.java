@@ -1,5 +1,6 @@
 package net.minecraft.src;
 
+import net.lax1dude.eaglercraft.sp.SysUtil;
 import net.minecraft.server.MinecraftServer;
 
 public class ConvertingProgressUpdate implements IProgressUpdate {
@@ -10,7 +11,7 @@ public class ConvertingProgressUpdate implements IProgressUpdate {
 
 	public ConvertingProgressUpdate(MinecraftServer par1) {
 		this.mcServer = par1;
-		this.field_96245_b = System.currentTimeMillis();
+		this.field_96245_b = SysUtil.steadyTimeMillis();
 	}
 
 	/**
@@ -24,8 +25,9 @@ public class ConvertingProgressUpdate implements IProgressUpdate {
 	 * loadProgress
 	 */
 	public void setLoadingProgress(int par1) {
-		if (System.currentTimeMillis() - this.field_96245_b >= 1000L) {
-			this.field_96245_b = System.currentTimeMillis();
+		long l = SysUtil.steadyTimeMillis();
+		if (l - this.field_96245_b >= 1000L) {
+			this.field_96245_b = l;
 			this.mcServer.getLogAgent().func_98233_a("Converting... " + par1 + "%");
 		}
 	}

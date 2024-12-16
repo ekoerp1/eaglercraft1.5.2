@@ -2,7 +2,6 @@ package net.lax1dude.eaglercraft.adapter;
 
 import static net.lax1dude.eaglercraft.adapter.teavm.WebGL2RenderingContext.*;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -32,6 +31,7 @@ import org.teavm.interop.AsyncCallback;
 import org.teavm.jso.JSBody;
 import org.teavm.jso.JSFunctor;
 import org.teavm.jso.JSObject;
+import org.teavm.jso.JSProperty;
 import org.teavm.jso.ajax.ReadyStateChangeHandler;
 import org.teavm.jso.ajax.XMLHttpRequest;
 import org.teavm.jso.browser.Storage;
@@ -39,6 +39,7 @@ import org.teavm.jso.browser.TimerHandler;
 import org.teavm.jso.browser.Window;
 import org.teavm.jso.canvas.CanvasRenderingContext2D;
 import org.teavm.jso.canvas.ImageData;
+import org.teavm.jso.core.JSString;
 import org.teavm.jso.dom.css.CSSStyleDeclaration;
 import org.teavm.jso.dom.events.ErrorEvent;
 import org.teavm.jso.dom.events.Event;
@@ -56,7 +57,6 @@ import org.teavm.jso.dom.html.HTMLVideoElement;
 import org.teavm.jso.media.MediaError;
 import org.teavm.jso.typedarrays.ArrayBuffer;
 import org.teavm.jso.typedarrays.DataView;
-import org.teavm.jso.typedarrays.Float32Array;
 import org.teavm.jso.typedarrays.Int32Array;
 import org.teavm.jso.typedarrays.Uint8Array;
 import org.teavm.jso.typedarrays.Uint8ClampedArray;
@@ -85,12 +85,15 @@ import org.teavm.jso.webgl.WebGLUniformLocation;
 import org.teavm.jso.websocket.CloseEvent;
 import org.teavm.jso.websocket.WebSocket;
 import org.teavm.jso.workers.Worker;
+import org.teavm.platform.Platform;
+import org.teavm.platform.PlatformRunnable;
 
 import net.lax1dude.eaglercraft.AssetRepository;
 import net.lax1dude.eaglercraft.Base64;
 import net.lax1dude.eaglercraft.Client;
 import net.lax1dude.eaglercraft.EaglerAdapter;
 import net.lax1dude.eaglercraft.EaglerImage;
+import net.lax1dude.eaglercraft.EaglerInputStream;
 import net.lax1dude.eaglercraft.EaglerProfile;
 import net.lax1dude.eaglercraft.EarlyLoadScreen;
 import net.lax1dude.eaglercraft.ExpiringSet;
@@ -103,13 +106,17 @@ import net.lax1dude.eaglercraft.RelayServerSocket;
 import net.lax1dude.eaglercraft.RelayWorldsQuery;
 import net.lax1dude.eaglercraft.ServerQuery;
 import net.lax1dude.eaglercraft.Voice;
+import net.lax1dude.eaglercraft.adapter.teavm.BufferConverter;
 import net.lax1dude.eaglercraft.adapter.teavm.EaglercraftLANClient;
 import net.lax1dude.eaglercraft.adapter.teavm.EaglercraftLANServer;
 import net.lax1dude.eaglercraft.adapter.teavm.EaglercraftVoiceClient;
+import net.lax1dude.eaglercraft.adapter.teavm.MessageChannel;
 import net.lax1dude.eaglercraft.adapter.teavm.SelfDefence;
+import net.lax1dude.eaglercraft.adapter.teavm.TeaVMUtils;
 import net.lax1dude.eaglercraft.adapter.teavm.WebGL2RenderingContext;
 import net.lax1dude.eaglercraft.adapter.teavm.WebGLQuery;
 import net.lax1dude.eaglercraft.adapter.teavm.WebGLVertexArray;
+import net.lax1dude.eaglercraft.glemu.EaglerAdapterGL30;
 import net.lax1dude.eaglercraft.sp.relay.pkt.IPacket;
 import net.lax1dude.eaglercraft.sp.relay.pkt.IPacket00Handshake;
 import net.lax1dude.eaglercraft.sp.relay.pkt.IPacket07LocalWorlds;
@@ -137,7 +144,7 @@ public class EaglerAdapterImpl2 {
 	public static final InputStream loadResource(String path) {
 		byte[] file = loadResourceBytes(path);
 		if (file != null) {
-			return new ByteArrayInputStream(file);
+			return new EaglerInputStream(file);
 		} else {
 			return null;
 		}
@@ -169,18 +176,14 @@ public class EaglerAdapterImpl2 {
 	public static native String downloadAssetPack(String assetPackageURI);
 
 	private static void downloadAssetPack(String assetPackageURI, final AsyncCallback<String> cb) {
-		final XMLHttpRequest request = XMLHttpRequest.create();
+		final XMLHttpRequest request = new XMLHttpRequest();
 		request.setResponseType("arraybuffer");
 		request.open("GET", assetPackageURI, true);
 		request.setOnReadyStateChange(new ReadyStateChangeHandler() {
 			@Override
 			public void stateChanged() {
 				if(request.getReadyState() == XMLHttpRequest.DONE) {
-					Uint8Array bl = Uint8Array.create((ArrayBuffer)request.getResponse());
-					loadedPackage = new byte[bl.getByteLength()];
-					for(int i = 0; i < loadedPackage.length; ++i) {
-						loadedPackage[i] = (byte) bl.get(i);
-					}
+					loadedPackage = TeaVMUtils.wrapByteArrayBuffer((ArrayBuffer)request.getResponse());
 					cb.complete("yee");
 				}
 			}
@@ -196,19 +199,14 @@ public class EaglerAdapterImpl2 {
 			cb.complete(new byte[0]);
 			return;
 		}
-		final XMLHttpRequest request = XMLHttpRequest.create();
+		final XMLHttpRequest request = new XMLHttpRequest();
 		request.setResponseType("arraybuffer");
 		request.open("GET", url, true);
 		request.setOnReadyStateChange(new ReadyStateChangeHandler() {
 			@Override
 			public void stateChanged() {
 				if(request.getReadyState() == XMLHttpRequest.DONE) {
-					Uint8Array bl = Uint8Array.create((ArrayBuffer)request.getResponse());
-					byte[] res = new byte[bl.getByteLength()];
-					for(int i = 0; i < res.length; ++i) {
-						res[i] = (byte) bl.get(i);
-					}
-					cb.complete(res);
+					cb.complete(TeaVMUtils.wrapByteArrayBuffer((ArrayBuffer)request.getResponse()));
 				}
 			}
 		});
@@ -224,22 +222,30 @@ public class EaglerAdapterImpl2 {
 	public static HTMLDocument doc = null;
 	public static HTMLElement parent = null;
 	public static HTMLCanvasElement canvas = null;
-	public static CanvasRenderingContext2D frameBuffer = null;
-	public static HTMLCanvasElement renderingCanvas = null;
 	public static WebGL2RenderingContext webgl = null;
+	public static FramebufferGL backBuffer = null;
+	public static RenderbufferGL backBufferColor = null;
+	public static RenderbufferGL backBufferDepth = null;
 	public static Window win = null;
 	private static byte[] loadedPackage = null;
-	private static EventListener contextmenu = null;
-	private static EventListener mousedown = null;
-	private static EventListener mouseup = null;
-	private static EventListener mousemove = null;
-	private static EventListener keydown = null;
-	private static EventListener keyup = null;
-	private static EventListener keypress = null;
-	private static EventListener wheel = null;
+	private static EventListener<?> contextmenu = null;
+	private static EventListener<?> mousedown = null;
+	private static EventListener<?> mouseup = null;
+	private static EventListener<?> mousemove = null;
+	private static EventListener<?> keydown = null;
+	private static EventListener<?> keyup = null;
+	private static EventListener<?> keypress = null;
+	private static EventListener<?> wheel = null;
 	private static String[] identifier = new String[0];
 	private static String integratedServerScript = "worker_bootstrap.js";
 	private static boolean anisotropicFilteringSupported = false;
+	private static boolean vsyncSupport = false;
+	private static int vsyncTimeout = -1;
+	private static boolean useDelayOnSwap = false;
+	private static MessageChannel immediateContinueChannel = null;
+	private static Runnable currentMsgChannelContinueHack = null;
+	
+	private static final EagsFileChooser fileChooser = initFileChooser();
 	
 	public static final String[] getIdentifier() {
 		return identifier;
@@ -290,18 +296,14 @@ public class EaglerAdapterImpl2 {
 			throw new RuntimeException("Mouse cursor lock is not available on this device!");
 		}
 		SelfDefence.init(canvas);
-		renderingCanvas = (HTMLCanvasElement)doc.createElement("canvas");
-		renderingCanvas.setWidth(sw);
-		renderingCanvas.setHeight(sh);
-		frameBuffer = (CanvasRenderingContext2D) canvas.getContext("2d");
-		webgl = (WebGL2RenderingContext) renderingCanvas.getContext("webgl2", youEagler());
+		webgl = (WebGL2RenderingContext) canvas.getContext("webgl2", youEagler());
 		if(webgl == null) {
 			Client.showIncompatibleScreen("WebGL 2.0 is not supported on this device!");
 			throw new RuntimeException("WebGL 2.0 is not supported in your browser ("+getNavString("userAgent")+")");
 		}
-		
-		//String agent = getString("window.navigator.userAgent").toLowerCase();
-		//if(agent.contains("windows")) isAnisotropicPatched = false;
+
+		setupBackBuffer();
+		resizeBackBuffer(sw, sh);
 		
 		anisotropicFilteringSupported = webgl.getExtension("EXT_texture_filter_anisotropic") != null;
 		
@@ -396,6 +398,18 @@ public class EaglerAdapterImpl2 {
 		});
 		onBeforeCloseRegister();
 		
+		checkImmediateContinueSupport();
+		
+		vsyncTimeout = -1;
+		vsyncSupport = false;
+
+		try {
+			asyncRequestAnimationFrame();
+			vsyncSupport = true;
+		}catch(Throwable t) {
+			System.err.println("VSync is not supported on this browser!");
+		}
+		
 		initFileChooser();
 		
 		EarlyLoadScreen.paintScreen();
@@ -421,15 +435,11 @@ public class EaglerAdapterImpl2 {
 			EarlyLoadScreen.paintEnable();
 			
 			while(mouseEvents.isEmpty() && keyEvents.isEmpty()) {
-				try {
-					Thread.sleep(100l);
-				} catch (InterruptedException e) {
-					;
-				}
+				sleep(100);
 			}
 		}
 		
-		audioctx = AudioContext.create();
+		audioctx = new AudioContext();
 		masterVolumeNode = audioctx.createGain();
 		masterVolumeNode.getGain().setValue(1.0f);
 		masterVolumeNode.connect(audioctx.getDestination());
@@ -443,48 +453,72 @@ public class EaglerAdapterImpl2 {
 		Window.setInterval(new TimerHandler() {
 			@Override
 			public void onTimer() {
-				Iterator<BufferedVideo> vids = videosBuffer.values().iterator();
-				while(vids.hasNext()) {
-					BufferedVideo v = vids.next();
-					if(System.currentTimeMillis() - v.requestedTime > v.ttl) {
-						v.videoElement.setSrc("");
-						vids.remove();
+				if(!videosBuffer.isEmpty()) {
+					long now = steadyTimeMillis();
+					Iterator<BufferedVideo> vids = videosBuffer.values().iterator();
+					while(vids.hasNext()) {
+						BufferedVideo v = vids.next();
+						if(now - v.requestedTime > v.ttl) {
+							v.videoElement.setSrc("");
+							vids.remove();
+						}
 					}
 				}
 			}
 		}, 5000);
 	}
-	
+
 	@JSBody(params = { }, script = "return window.startVoiceClient();")
 	private static native EaglercraftVoiceClient startVoiceClient();
-	
+
+	private static interface EagsFileChooser extends JSObject {
+
+		@JSProperty
+		HTMLElement getInputElement();
+
+		void openFileChooser(String ext, String mime);
+
+		@JSProperty
+		ArrayBuffer getGetFileChooserResult();
+
+		@JSProperty
+		void setGetFileChooserResult(ArrayBuffer val);
+
+		@JSProperty
+		String getGetFileChooserResultName();
+
+		@JSProperty
+		void setGetFileChooserResultName(String str);
+
+	}
+
 	@JSBody(params = { }, script = 
-			"window.eagsFileChooser = {\r\n" + 
+			"var ret = {\r\n" + 
 			"inputElement: null,\r\n" + 
 			"openFileChooser: function(ext, mime){\r\n" + 
-			"var el = window.eagsFileChooser.inputElement = document.createElement(\"input\");\r\n" + 
+			"var el = ret.inputElement = document.createElement(\"input\");\r\n" + 
 			"el.type = \"file\";\r\n" + 
 			"el.multiple = false;\r\n" + 
 			"el.addEventListener(\"change\", function(evt){\r\n" + 
-			"var f = window.eagsFileChooser.inputElement.files;\r\n" + 
+			"var f = ret.inputElement.files;\r\n" + 
 			"if(f.length == 0){\r\n" + 
-			"window.eagsFileChooser.getFileChooserResult = null;\r\n" + 
+			"ret.getFileChooserResult = null;\r\n" + 
 			"}else{\r\n" + 
-			"(async function(){\r\n" + 
-			"window.eagsFileChooser.getFileChooserResult = await f[0].arrayBuffer();\r\n" + 
-			"window.eagsFileChooser.getFileChooserResultName = f[0].name;\r\n" + 
-			"})();\r\n" + 
+			"f[0].arrayBuffer().then(function(res) {\r\n" + 
+			"ret.getFileChooserResult = res;\r\n" + 
+			"ret.getFileChooserResultName = f[0].name;\r\n" + 
+			"});\r\n" + 
 			"}\r\n" + 
 			"});\r\n" + 
-			"window.eagsFileChooser.getFileChooserResult = null;\r\n" + 
-			"window.eagsFileChooser.getFileChooserResultName = null;\r\n" + 
+			"ret.getFileChooserResult = null;\r\n" + 
+			"ret.getFileChooserResultName = null;\r\n" + 
 			"el.accept = \".\" + ext;\r\n" +
 			"el.click();\r\n" + 
 			"},\r\n" + 
 			"getFileChooserResult: null,\r\n" + 
 			"getFileChooserResultName: null\r\n" + 
-			"};")
-	private static native void initFileChooser();
+			"}; return ret;")
+	private static native EagsFileChooser initFileChooser();
 	
 	public static final void destroyContext() {
 		
@@ -514,8 +548,8 @@ public class EaglerAdapterImpl2 {
 		}
 	}
 
-	private static LinkedList<MouseEvent> mouseEvents = new LinkedList();
-	private static LinkedList<KeyboardEvent> keyEvents = new LinkedList();
+	private static LinkedList<MouseEvent> mouseEvents = new LinkedList<>();
+	private static LinkedList<KeyboardEvent> keyEvents = new LinkedList<>();
 
 	private static int mouseX = 0;
 	private static int mouseY = 0;
@@ -526,8 +560,11 @@ public class EaglerAdapterImpl2 {
 	private static boolean enableRepeatEvents = false;
 	private static boolean isWindowFocused = true;
 	
-	@JSBody(params = { }, script = "return {antialias: false, depth: true, powerPreference: \"high-performance\", desynchronized: false, preserveDrawingBuffer: false, premultipliedAlpha: false, alpha: false};")
+	@JSBody(params = { }, script = "return {antialias: false, depth: true, powerPreference: \"high-performance\", desynchronized: true, preserveDrawingBuffer: false, premultipliedAlpha: false, alpha: false};")
 	public static native JSObject youEagler();
+	
+	@JSBody(params = { }, script = "return { willReadFrequently: true };")
+	public static native JSObject youEagler2();
 	
 	public static final int _wGL_TEXTURE_2D = TEXTURE_2D;
 	public static final int _wGL_DEPTH_TEST = DEPTH_TEST;
@@ -588,6 +625,7 @@ public class EaglerAdapterImpl2 {
 	public static final int _wGL_ELEMENT_ARRAY_BUFFER = ELEMENT_ARRAY_BUFFER;
 	public static final int _wGL_STATIC_DRAW = STATIC_DRAW;
 	public static final int _wGL_DYNAMIC_DRAW = DYNAMIC_DRAW;
+	public static final int _wGL_STREAM_DRAW = STREAM_DRAW;
 	public static final int _wGL_INVALID_ENUM = INVALID_ENUM;
 	public static final int _wGL_INVALID_VALUE= INVALID_VALUE;
 	public static final int _wGL_INVALID_OPERATION = INVALID_OPERATION;
@@ -720,22 +758,14 @@ public class EaglerAdapterImpl2 {
 	public static final void _wglFlush() {
 		//webgl.flush();
 	}
-	private static Uint8Array uploadBuffer = Uint8Array.create(ArrayBuffer.create(4 * 1024 * 1024));
 	public static final void _wglTexImage2D(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, ByteBuffer p9) {
-		if(p9 == null) {
-			webgl.texImage2D(p1, p2, p3, p4, p5, p6, p7, p8, null);
-		}else {
-			int len = p9.remaining();
-			Uint8Array uploadBuffer1 = uploadBuffer;
-			for(int i = 0; i < len; ++i) {
-				uploadBuffer1.set(i, (short) ((int)p9.get() & 0xff));
-			}
-			Uint8Array data = Uint8Array.create(uploadBuffer.getBuffer(), 0, len);
-			webgl.texImage2D(p1, p2, p3, p4, p5, p6, p7, p8, data);
-		}
+		webgl.texImage2D(p1, p2, p3, p4, p5, p6, p7, p8, p9 != null ? BufferConverter.convertByteBufferUnsigned(p9) : null);
 	}
 	public static final void _wglBlendFunc(int p1, int p2) {
 		webgl.blendFunc(p1, p2);
+	}
+	public static final void _wglBlendFuncSeparate(int p1, int p2, int p3, int p4) {
+		webgl.blendFuncSeparate(p1, p2, p3, p4);
 	}
 	public static final void _wglBlendColor(float r, float g, float b, float a) {
 		webgl.blendColor(r, g, b, a);
@@ -759,22 +789,10 @@ public class EaglerAdapterImpl2 {
 		webgl.texParameterf(p1, p2, p3);
 	}
 	public static final void _wglTexImage2D(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, IntBuffer p9) {
-		int len = p9.remaining();
-		DataView deevis = DataView.create(uploadBuffer.getBuffer());
-		for(int i = 0; i < len; ++i) {
-			deevis.setInt32(i * 4, p9.get(), true);
-		}
-		Uint8Array data = Uint8Array.create(uploadBuffer.getBuffer(), 0, len*4);
-		webgl.texImage2D(p1, p2, p3, p4, p5, p6, p7, p8, data);
+		webgl.texImage2D(p1, p2, p3, p4, p5, p6, p7, p8, p9 != null ? BufferConverter.convertIntBufferUnsigned(p9) : null);
 	}
 	public static final void _wglTexSubImage2D(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, IntBuffer p9) {
-		int len = p9.remaining();
-		DataView deevis = DataView.create(uploadBuffer.getBuffer());
-		for(int i = 0; i < len; ++i) {
-			deevis.setInt32(i * 4, p9.get(), true);
-		}
-		Uint8Array data = Uint8Array.create(uploadBuffer.getBuffer(), 0, len*4);
-		webgl.texSubImage2D(p1, p2, p3, p4, p5, p6, p7, p8, data);
+		webgl.texSubImage2D(p1, p2, p3, p4, p5, p6, p7, p8, p9 != null ? BufferConverter.convertIntBufferUnsigned(p9) : null);
 	}
 	public static final void _wglDeleteTextures(TextureGL p1) {
 		webgl.deleteTexture(p1.obj);
@@ -789,13 +807,7 @@ public class EaglerAdapterImpl2 {
 		return new TextureGL(webgl.createTexture());
 	}
 	public static final void _wglTexSubImage2D(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, ByteBuffer p9) {
-		int len = p9.remaining();
-		for(int i = 0; i < len; ++i) {
-			//uploadBuffer.set(swapEndian ? ((i >> 2) + (3 - (i & 3))) : i, (short) ((int)p9.get() & 0xff));
-			uploadBuffer.set(i, (short) ((int)p9.get() & 0xff));
-		}
-		Uint8Array data = Uint8Array.create(uploadBuffer.getBuffer(), 0, len);
-		webgl.texSubImage2D(p1, p2, p3, p4, p5, p6, p7, p8, data);
+		webgl.texSubImage2D(p1, p2, p3, p4, p5, p6, p7, p8, p9 != null ? BufferConverter.convertByteBufferUnsigned(p9) : null);
 	}
 	public static final void _wglActiveTexture(int p1) {
 		webgl.activeTexture(p1);
@@ -849,25 +861,16 @@ public class EaglerAdapterImpl2 {
 		webgl.bindBuffer(p1, p2 == null ? null : p2.obj);
 	}
 	public static final void _wglBufferData0(int p1, IntBuffer p2, int p3) {
-		int len = p2.remaining();
-		DataView deevis = DataView.create(uploadBuffer.getBuffer());
-		for(int i = 0; i < len; ++i) {
-			deevis.setInt32(i * 4, p2.get(), true);
-		}
-		Uint8Array data = Uint8Array.create(uploadBuffer.getBuffer(), 0, len*4);
-		webgl.bufferData(p1, data, p3);
+		webgl.bufferData(p1, p2 != null ? BufferConverter.convertIntBufferUnsigned(p2) : null, p3);
 	}
 	public static final void _wglBufferSubData0(int p1, int p2, IntBuffer p3) {
-		int len = p3.remaining();
-		DataView deevis = DataView.create(uploadBuffer.getBuffer());
-		for(int i = 0; i < len; ++i) {
-			deevis.setInt32(i * 4, p3.get(), true);
-		}
-		Uint8Array data = Uint8Array.create(uploadBuffer.getBuffer(), 0, len*4);
-		webgl.bufferSubData(p1, p2, data);
+		webgl.bufferSubData(p1, p2, p3 != null ? BufferConverter.convertIntBufferUnsigned(p3) : null);
 	}
 	public static final void _wglBufferData(int p1, Object p2, int p3) {
 		webgl.bufferData(p1, (Int32Array)p2, p3);
+	}
+	public static final void _wglBufferData00(int p1, long len, int p3) {
+		webgl.bufferData(p1, (int)len, p3);
 	}
 	public static final void _wglBufferSubData(int p1, int p2, Object p3) {
 		webgl.bufferSubData(p1, p2, (Int32Array)p3);
@@ -912,20 +915,14 @@ public class EaglerAdapterImpl2 {
 	public static final void _wglUniform4i(UniformGL p1, int p2, int p3, int p4, int p5) {
 		if(p1 != null) webgl.uniform4i(p1.obj, p2, p3, p4, p5);
 	}
-	private static Float32Array mat2 = Float32Array.create(4);
-	private static Float32Array mat3 = Float32Array.create(9);
-	private static Float32Array mat4 = Float32Array.create(16);
 	public static final void _wglUniformMat2fv(UniformGL p1, float[] mat) {
-		mat2.set(mat);
-		if(p1 != null) webgl.uniformMatrix2fv(p1.obj, false, mat2);
+		if(p1 != null) webgl.uniformMatrix2fv(p1.obj, false, TeaVMUtils.unwrapFloatArray(mat));
 	}
 	public static final void _wglUniformMat3fv(UniformGL p1, float[] mat) {
-		mat3.set(mat);
-		if(p1 != null) webgl.uniformMatrix3fv(p1.obj, false, mat3);
+		if(p1 != null) webgl.uniformMatrix3fv(p1.obj, false, TeaVMUtils.unwrapFloatArray(mat));
 	}
 	public static final void _wglUniformMat4fv(UniformGL p1, float[] mat) {
-		mat4.set(mat);
-		if(p1 != null) webgl.uniformMatrix4fv(p1.obj, false, mat4);
+		if(p1 != null) webgl.uniformMatrix4fv(p1.obj, false, TeaVMUtils.unwrapFloatArray(mat));
 	}
 	private static int currentProgram = -1;
 	public static final void _wglUseProgram(ProgramGL p1) {
@@ -949,7 +946,7 @@ public class EaglerAdapterImpl2 {
 		webgl.vertexAttribPointer(p1, p2, p3, p4, p5, p6);
 	}
 	public static final void _wglBindFramebuffer(int p1, FramebufferGL p2) {
-		webgl.bindFramebuffer(p1, p2 == null ? null : p2.obj);
+		webgl.bindFramebuffer(p1, p2 == null ? backBuffer.obj : p2.obj);
 	}
 	public static final void _wglReadBuffer(int p1) {
 		webgl.readBuffer(p1);
@@ -1045,10 +1042,11 @@ public class EaglerAdapterImpl2 {
 	private static native void freeDataURL(String url);
 	
 	public static final EaglerImage loadPNG(byte[] data) {
-		ArrayBuffer arr = ArrayBuffer.create(data.length);
-		Uint8Array.create(arr).set(data);
-		return loadPNG0(arr);
+		return loadPNG0(TeaVMUtils.unwrapArrayBuffer(data));
 	}
+	
+	@JSBody(params = { "cccc", "ennn" }, script = "cccc.imageSmoothingEnabled = ennn;")
+	private static native void setImageSmoothingMode(CanvasRenderingContext2D cc, boolean en);
 	
 	@Async
 	private static native EaglerImage loadPNG0(ArrayBuffer data);
@@ -1068,7 +1066,8 @@ public class EaglerAdapterImpl2 {
 					imageLoadCanvas.setHeight(toLoad.getHeight());
 				}
 				if(imageLoadContext == null) {
-					imageLoadContext = (CanvasRenderingContext2D) imageLoadCanvas.getContext("2d");
+					imageLoadContext = (CanvasRenderingContext2D) imageLoadCanvas.getContext("2d", youEagler2());
+					setImageSmoothingMode(imageLoadContext, false);
 				}
 				imageLoadContext.clearRect(0, 0, toLoad.getWidth(), toLoad.getHeight());
 				imageLoadContext.drawImage(toLoad, 0, 0, toLoad.getWidth(), toLoad.getHeight());
@@ -1080,7 +1079,7 @@ public class EaglerAdapterImpl2 {
 					ret.complete(null);
 					return;
 				}
-				DataView dv = DataView.create(pxls.getBuffer());
+				DataView dv = new DataView(pxls.getBuffer());
 				int[] pixels = new int[totalPixels];
 				for(int i = 0, j; i < pixels.length; ++i) {
 					j = dv.getUint32(i << 2, false);
@@ -1225,13 +1224,13 @@ public class EaglerAdapterImpl2 {
 		public BufferedVideo(HTMLVideoElement videoElement, String url, int ttl) {
 			this.videoElement = videoElement;
 			this.url = url;
-			this.requestedTime = System.currentTimeMillis();
+			this.requestedTime = steadyTimeMillis();
 			this.ttl = ttl;
 		}
 		
 	}
 	
-	private static final HashMap<String, BufferedVideo> videosBuffer = new HashMap();
+	private static final HashMap<String, BufferedVideo> videosBuffer = new HashMap<>();
 	
 	public static final void bufferVideo(String src, int ttl) {
 		if(!videosBuffer.containsKey(src)) {
@@ -1318,7 +1317,7 @@ public class EaglerAdapterImpl2 {
 	private static native void html5VideoTexSubImage2D(WebGL2RenderingContext ctx, int target, int format, int type, HTMLVideoElement video);
 	
 	public static final void updateVideoTexture() {
-		long ms = System.currentTimeMillis();
+		long ms = steadyTimeMillis();
 		if(ms - frameTimer < frameRate && videoTexIsInitialized) {
 			return;
 		}
@@ -1477,13 +1476,13 @@ public class EaglerAdapterImpl2 {
 		public BufferedImageElem(HTMLImageElement imageElement, String url, int ttl) {
 			this.imageElement = imageElement;
 			this.url = url;
-			this.requestedTime = System.currentTimeMillis();
+			this.requestedTime = steadyTimeMillis();
 			this.ttl = ttl;
 		}
 
 	}
 
-	private static final HashMap<String, BufferedImageElem> imagesBuffer = new HashMap();
+	private static final HashMap<String, BufferedImageElem> imagesBuffer = new HashMap<>();
 
 	public static final void bufferImage(String src, int ttl) {
 		if(!imagesBuffer.containsKey(src)) {
@@ -1521,7 +1520,7 @@ public class EaglerAdapterImpl2 {
 	private static native void html5ImageTexSubImage2D(WebGL2RenderingContext ctx, int target, int format, int type, HTMLImageElement image);
 
 	public static final void updateImageTexture() {
-		long ms = System.currentTimeMillis();
+		long ms = steadyTimeMillis();
 		if(ms - imageFrameTimer < imageFrameRate && imageTexIsInitialized) {
 			return;
 		}
@@ -1601,7 +1600,7 @@ public class EaglerAdapterImpl2 {
 	public static final void mouseSetGrabbed(boolean grabbed) {
 		if(grabbed) {
 			canvas.requestPointerLock();
-			long t = System.currentTimeMillis();
+			long t = steadyTimeMillis();
 			if(mouseUngrabTimeout != 0) Window.clearTimeout(mouseUngrabTimeout);
 			mouseUngrabTimeout = 0;
 			if(t - mouseUngrabTimer < 3000l) {
@@ -1613,7 +1612,7 @@ public class EaglerAdapterImpl2 {
 				}, 3000 - (int)(t - mouseUngrabTimer));
 			}
 		}else {
-			mouseUngrabTimer = System.currentTimeMillis();
+			mouseUngrabTimer = steadyTimeMillis();
 			if(mouseUngrabTimeout != 0) Window.clearTimeout(mouseUngrabTimeout);
 			mouseUngrabTimeout = 0;
 			doc.exitPointerLock();
@@ -1686,12 +1685,13 @@ public class EaglerAdapterImpl2 {
 	public static final boolean shouldShutdown() {
 		return false;
 	}
-	
-	@JSBody(params = { "obj" }, script = "if(obj.commit) obj.commit();")
-	private static native int commitContext(JSObject obj);
-	
-	public static final void updateDisplay() {
-		//commitContext(webgl);
+	public static final boolean isVSyncSupported() {
+		return vsyncSupport;
+	}
+	@JSBody(params = { "doc" }, script = "return (typeof doc.visibilityState !== \"string\") || (doc.visibilityState === \"visible\");")
+	private static native boolean getVisibilityState(JSObject doc);
+	private static final long[] syncTimer = new long[1];
+	public static final void updateDisplay(int fpsLimit, boolean vsync) {
 		double r = win.getDevicePixelRatio();
 		int w = parent.getClientWidth();
 		int h = parent.getClientHeight();
@@ -1703,25 +1703,207 @@ public class EaglerAdapterImpl2 {
 		if(canvas.getHeight() != h2) {
 			canvas.setHeight(h2);
 		}
-		frameBuffer.drawImage(renderingCanvas, 0, 0, w2, h2);
-		if(renderingCanvas.getWidth() != w2) {
-			renderingCanvas.setWidth(w2);
+		webgl.bindFramebuffer(FRAMEBUFFER, null);
+		webgl.bindFramebuffer(READ_FRAMEBUFFER, backBuffer.obj);
+		webgl.bindFramebuffer(DRAW_FRAMEBUFFER, null);
+		webgl.blitFramebuffer(0, 0, backBufferWidth, backBufferHeight, 0, 0, w2, h2, COLOR_BUFFER_BIT, NEAREST);
+		webgl.bindFramebuffer(FRAMEBUFFER, backBuffer.obj);
+		resizeBackBuffer(w2, h2);
+
+		if(getVisibilityState(win.getDocument())) {
+			if(vsyncSupport && vsync) {
+				syncTimer[0] = 0l;
+				asyncRequestAnimationFrame();
+			}else {
+				if(fpsLimit <= 0) {
+					syncTimer[0] = 0l;
+					swapDelayTeaVM();
+				}else {
+					if(!EaglerAdapterGL30.sync(fpsLimit, syncTimer)) {
+						swapDelayTeaVM();
+					}
+				}
+			}
+		}else {
+			syncTimer[0] = 0l;
+			sleep(50);
 		}
-		if(renderingCanvas.getHeight() != h2) {
-			renderingCanvas.setHeight(h2);
+	}
+	@Async
+	private static native void asyncRequestAnimationFrame();
+	private static void asyncRequestAnimationFrame(AsyncCallback<Void> cb) {
+		if(vsyncTimeout != -1) {
+			cb.error(new IllegalStateException("Already waiting for vsync!"));
+			return;
+		}
+		final boolean[] hasTimedOut = new boolean[] { false };
+		final int[] timeout = new int[] { -1 };
+		Window.requestAnimationFrame((d) -> {
+			if(!hasTimedOut[0]) {
+				hasTimedOut[0] = true;
+				if(vsyncTimeout != -1) {
+					if(vsyncTimeout == timeout[0]) {
+						try {
+							Window.clearTimeout(vsyncTimeout);
+						}catch(Throwable t) {
+						}
+						vsyncTimeout = -1;
+					}
+					cb.complete(null);
+				}
+			}
+		});
+		vsyncTimeout = timeout[0] = Window.setTimeout(() -> {
+			if(!hasTimedOut[0]) {
+				hasTimedOut[0] = true;
+				if(vsyncTimeout != -1) {
+					vsyncTimeout = -1;
+					cb.complete(null);
+				}
+			}
+		}, 50);
+	}
+	private static final void swapDelayTeaVM() {
+		if(!useDelayOnSwap && immediateContinueChannel != null) {
+			immediateContinueTeaVM0();
+		}else {
+			sleep(0);
+		}
+	}
+	public static final void immediateContinue() {
+		if(immediateContinueChannel != null) {
+			immediateContinueTeaVM0();
+		}else {
+			sleep(0);
+		}
+	}
+	public static final boolean immediateContinueSupported() {
+		return immediateContinueChannel != null;
+	}
+	private static final JSString emptyJSString = JSString.valueOf("");
+	@Async
+	private static native void immediateContinueTeaVM0();
+	private static void immediateContinueTeaVM0(final AsyncCallback<Void> cb) {
+		if(currentMsgChannelContinueHack != null) {
+			cb.error(new IllegalStateException("Main thread is already waiting for an immediate continue callback!"));
+			return;
+		}
+		currentMsgChannelContinueHack = () -> {
+			cb.complete(null);
+		};
+		try {
+			immediateContinueChannel.getPort2().postMessage(emptyJSString);
+		}catch(Throwable t) {
+			currentMsgChannelContinueHack = null;
+			System.err.println("Caught error posting immediate continue, using setTimeout instead");
+			Window.setTimeout(() -> cb.complete(null), 0);
+		}
+	}
+	private static final int IMMEDIATE_CONT_SUPPORTED = 0;
+	private static final int IMMEDIATE_CONT_FAILED_NOT_ASYNC = 1;
+	private static final int IMMEDIATE_CONT_FAILED_NOT_CONT = 2;
+	private static final int IMMEDIATE_CONT_FAILED_EXCEPTIONS = 3;
+	private static void checkImmediateContinueSupport() {
+		immediateContinueChannel = null;
+		int stat = checkImmediateContinueSupport0();
+		if(stat == IMMEDIATE_CONT_SUPPORTED) {
+			return;
+		}else if(stat == IMMEDIATE_CONT_FAILED_NOT_ASYNC) {
+			System.err.println("MessageChannel fast immediate continue hack is incompatible with this browser due to actually continuing immediately!");
+		}else if(stat == IMMEDIATE_CONT_FAILED_NOT_CONT) {
+			System.err.println("MessageChannel fast immediate continue hack is incompatible with this browser due to startup check failing!");
+		}else if(stat == IMMEDIATE_CONT_FAILED_EXCEPTIONS) {
+			System.err.println("MessageChannel fast immediate continue hack is incompatible with this browser due to exceptions!");
+		}
+		immediateContinueChannel = null;
+	}
+	private static int checkImmediateContinueSupport0() {
+		try {
+			if(!MessageChannel.supported()) {
+				return IMMEDIATE_CONT_SUPPORTED;
+			}
+			immediateContinueChannel = new MessageChannel();
+			immediateContinueChannel.getPort1().addEventListener("message", new EventListener<MessageEvent>() {
+				@Override
+				public void handleEvent(MessageEvent evt) {
+					Runnable toRun = currentMsgChannelContinueHack;
+					currentMsgChannelContinueHack = null;
+					if(toRun != null) {
+						toRun.run();
+					}
+				}
+			});
+			immediateContinueChannel.getPort1().start();
+			immediateContinueChannel.getPort2().start();
+			final boolean[] checkMe = new boolean[1];
+			checkMe[0] = false;
+			currentMsgChannelContinueHack = () -> {
+				checkMe[0] = true;
+			};
+			immediateContinueChannel.getPort2().postMessage(emptyJSString);
+			if(checkMe[0]) {
+				currentMsgChannelContinueHack = null;
+				if(immediateContinueChannel != null) {
+					safeShutdownChannel(immediateContinueChannel);
+				}
+				immediateContinueChannel = null;
+				return IMMEDIATE_CONT_FAILED_NOT_ASYNC;
+			}
+			sleep(10);
+			currentMsgChannelContinueHack = null;
+			if(!checkMe[0]) {
+				if(immediateContinueChannel != null) {
+					safeShutdownChannel(immediateContinueChannel);
+				}
+				immediateContinueChannel = null;
+				return IMMEDIATE_CONT_FAILED_NOT_CONT;
+			}else {
+				return IMMEDIATE_CONT_SUPPORTED;
+			}
+		}catch(Throwable t) {
+			currentMsgChannelContinueHack = null;
+			if(immediateContinueChannel != null) {
+				safeShutdownChannel(immediateContinueChannel);
+			}
+			immediateContinueChannel = null;
+			return IMMEDIATE_CONT_FAILED_EXCEPTIONS;
+		}
+	}
+	private static void safeShutdownChannel(MessageChannel chan) {
+		try {
+			chan.getPort1().close();
+		}catch(Throwable tt) {
 		}
 		try {
-			Thread.sleep(1l);
-		} catch (InterruptedException e) {
-			;
+			chan.getPort2().close();
+		}catch(Throwable tt) {
+		}
+	}
+	public static final void setupBackBuffer() {
+		backBuffer = _wglCreateFramebuffer();
+		_wglBindFramebuffer(_wGL_FRAMEBUFFER, null);
+		backBufferColor = _wglCreateRenderBuffer();
+		_wglBindRenderbuffer(backBufferColor);
+		_wglFramebufferRenderbuffer(_wGL_COLOR_ATTACHMENT0, backBufferColor);
+		backBufferDepth = _wglCreateRenderBuffer();
+		_wglBindRenderbuffer(backBufferDepth);
+		_wglFramebufferRenderbuffer(_wGL_DEPTH_ATTACHMENT, backBufferDepth);
+	}
+	private static int backBufferWidth = -1;
+	private static int backBufferHeight = -1;
+	public static final void resizeBackBuffer(int w, int h) {
+		if(w != backBufferWidth || h != backBufferHeight) {
+			_wglBindRenderbuffer(backBufferColor);
+			_wglRenderbufferStorage(_wGL_RGBA8, w, h);
+			_wglBindRenderbuffer(backBufferDepth);
+			_wglRenderbufferStorage(_wGL_DEPTH_COMPONENT32F, w, h);
+			backBufferWidth = w;
+			backBufferHeight = h;
 		}
 	}
 	public static final float getContentScaling() {
 		 return (float)win.getDevicePixelRatio();
 	}
-	public static final void setVSyncEnabled(boolean p1) {
-		
-	} 
 	public static final void enableRepeatEvents(boolean b) {
 		enableRepeatEvents = b;
 	}
@@ -1748,21 +1930,27 @@ public class EaglerAdapterImpl2 {
 		return win.getScreen().getAvailHeight();
 	}
 	public static final int getCanvasWidth() {
-		return renderingCanvas.getWidth();
+		return canvas.getWidth();
 	}
 	public static final int getCanvasHeight() {
-		return renderingCanvas.getHeight();
+		return canvas.getHeight();
 	}
 	public static final void setDisplaySize(int x, int y) {
-		
-	}
-	public static final void syncDisplay(int performanceToFps) {
 		
 	}
 	
 	private static final DateFormat dateFormatSS = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss");
 	public static final void saveScreenshot() {
-		saveScreenshot("screenshot_" + dateFormatSS.format(new Date()).toString() + ".png", canvas);
+		webgl.finish();
+		HTMLCanvasElement retardedCanvas = (HTMLCanvasElement)doc.createElement("canvas");
+		retardedCanvas.setWidth(canvas.getWidth());
+		retardedCanvas.setHeight(canvas.getHeight());
+		CanvasRenderingContext2D cc = (CanvasRenderingContext2D)retardedCanvas.getContext("2d", youEagler2());
+		setImageSmoothingMode(cc, false);
+		cc.setFillStyle("black");
+		cc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
+		cc.drawImage(canvas, 0, 0, canvas.getWidth(), canvas.getHeight());
+		saveScreenshot("screenshot_" + dateFormatSS.format(new Date()).toString() + ".png", retardedCanvas);
 	}
 	
 	@JSBody(params = { "name", "cvs" }, script = "var a=document.createElement(\"a\");a.href=cvs.toDataURL(\"image/png\");a.download=name;a.click();")
@@ -1772,14 +1960,14 @@ public class EaglerAdapterImpl2 {
 		NONE, FAILED, BLOCKED, FAILED_POSSIBLY_LOCKED, LOCKED, NOW_LOCKED;
 	}
 
-	private static final Set<String> rateLimitedAddresses = new HashSet();
-	private static final Set<String> blockedAddresses = new HashSet();
+	private static final Set<String> rateLimitedAddresses = new HashSet<>();
+	private static final Set<String> blockedAddresses = new HashSet<>();
 	
 	private static WebSocket sock = null;
 	private static boolean sockIsConnecting = false;
 	private static boolean sockIsConnected = false;
 	private static boolean sockIsAlive = false;
-	private static LinkedList<byte[]> readPackets = new LinkedList();
+	private static LinkedList<byte[]> readPackets = new LinkedList<>();
 	private static RateLimit rateLimitStatus = null;
 	private static String currentSockURI = null;
 	
@@ -1815,16 +2003,16 @@ public class EaglerAdapterImpl2 {
 		rateLimitStatus = null;
 		currentSockURI = sockURI;
 		try {
-			sock = WebSocket.create(sockURI);
+			sock = new WebSocket(sockURI);
 		} catch(Throwable t) {
 			sockIsConnecting = false;
 			sockIsAlive = false;
 			return;
 		}
 		sock.setBinaryType("arraybuffer");
-		sock.onOpen(new EventListener<MessageEvent>() {
+		sock.addEventListener("open", new EventListener<Event>() {
 			@Override
-			public void handleEvent(MessageEvent evt) {
+			public void handleEvent(Event evt) {
 				sockIsConnecting = false;
 				sockIsAlive = false;
 				sockIsConnected = true;
@@ -1832,7 +2020,7 @@ public class EaglerAdapterImpl2 {
 				cb.complete("okay");
 			}
 		});
-		sock.onClose(new EventListener<CloseEvent>() {
+		sock.addEventListener("close", new EventListener<CloseEvent>() {
 			@Override
 			public void handleEvent(CloseEvent evt) {
 				sock = null;
@@ -1862,7 +2050,7 @@ public class EaglerAdapterImpl2 {
 				if(b) cb.complete("fail");
 			}
 		});
-		sock.onMessage(new EventListener<MessageEvent>() {
+		sock.addEventListener("message", new EventListener<MessageEvent>() {
 			@Override
 			public void handleEvent(MessageEvent evt) {
 				sockIsAlive = true;
@@ -1885,12 +2073,7 @@ public class EaglerAdapterImpl2 {
 					sock.close();
 					return;
 				}
-				Uint8Array a = Uint8Array.create(evt.getDataAsArray());
-				byte[] b = new byte[a.getByteLength()];
-				for(int i = 0; i < b.length; ++i) {
-					b[i] = (byte) (a.get(i) & 0xFF);
-				}
-				readPackets.add(b);
+				readPackets.add(TeaVMUtils.wrapByteArrayBuffer(evt.getDataAsArray()));
 			}
 		});
 	}
@@ -1923,9 +2106,7 @@ public class EaglerAdapterImpl2 {
 	private static native void nativeBinarySend(WebSocket sock, ArrayBuffer buffer);
 	public static final void writePacket(byte[] packet) {
 		if(sock != null && !sockIsConnecting) {
-			Uint8Array arr = Uint8Array.create(packet.length);
-			arr.set(packet);
-			nativeBinarySend(sock, arr.getBuffer());
+			nativeBinarySend(sock, TeaVMUtils.unwrapArrayBuffer(packet));
 		}
 	}
 	public static final byte[] readPacket() {
@@ -1971,33 +2152,34 @@ public class EaglerAdapterImpl2 {
 	@JSBody(params = { }, script = "window.onbeforeunload = function(){javaMethods.get('net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.onWindowUnload()V').invoke();return false;};")
 	private static native void onBeforeCloseRegister();
 
-	@JSBody(params = { "ext", "mime" }, script = "window.eagsFileChooser.openFileChooser(ext, mime);")
-	public static native void openFileChooser(String ext, String mime);
+	public static final void openFileChooser(String ext, String mime) {
+		fileChooser.openFileChooser(ext, mime);
+	}
 	
-	@JSBody(params = { }, script = "return window.eagsFileChooser.getFileChooserResult != null;")
-	public static final native boolean getFileChooserResultAvailable();
+	public static final boolean getFileChooserResultAvailable() {
+		return fileChooser.getGetFileChooserResult() != null;
+	}
 	
 	public static final byte[] getFileChooserResult() {
 		ArrayBuffer b = getFileChooserResult0();
 		if(b == null) return null;
-		Uint8Array array = Uint8Array.create(b);
-		byte[] ret = new byte[array.getByteLength()];
-		for(int i = 0; i < ret.length; ++i) {
-			ret[i] = (byte) array.get(i);
-		}
-		return ret;
+		return TeaVMUtils.wrapByteArrayBuffer(b);
 	}
 	
 	public static final void clearFileChooserResult() {
 		getFileChooserResult0();
 	}
 
-	@JSBody(params = {  }, script = "var ret = window.eagsFileChooser.getFileChooserResult; window.eagsFileChooser.getFileChooserResult = null; return ret;")
-	private static native ArrayBuffer getFileChooserResult0();
+	private static final ArrayBuffer getFileChooserResult0() {
+		ArrayBuffer ret = fileChooser.getGetFileChooserResult();
+		fileChooser.setGetFileChooserResultName(null);
+		return ret;
+	}
 
-	@JSBody(params = { }, script = "var ret = window.eagsFileChooser.getFileChooserResultName; window.eagsFileChooser.getFileChooserResultName = null; return ret;")
-	public static native String getFileChooserResultName();
-	
+	public static final String getFileChooserResultName() {
+		return fileChooser.getGetFileChooserResultName();
+	}
+
 	public static final void setListenerPos(float x, float y, float z, float vx, float vy, float vz, float pitch, float yaw) {
 		float var2 = MathHelper.cos(-yaw * 0.017453292F);
 		float var3 = MathHelper.sin(-yaw * 0.017453292F);
@@ -2010,7 +2192,7 @@ public class EaglerAdapterImpl2 {
 	
 	private static int playbackId = 0;
 	private static int audioElementId = 0;
-	private static final HashMap<String,AudioBufferX> loadedSoundFiles = new HashMap();
+	private static final HashMap<String,AudioBufferX> loadedSoundFiles = new HashMap<>();
 	private static AudioContext audioctx = null;
 	private static GainNode masterVolumeNode = null;
 	private static GainNode musicVolumeNode = null;
@@ -2068,7 +2250,7 @@ public class EaglerAdapterImpl2 {
 		});
 	}
 	
-	private static final HashMap<Integer,AudioSourceNodeX> activeSoundEffects = new HashMap();
+	private static final HashMap<Integer,AudioSourceNodeX> activeSoundEffects = new HashMap<>();
 
 	private static class AudioBufferX {
 		private final AudioBuffer buffer;
@@ -2114,7 +2296,7 @@ public class EaglerAdapterImpl2 {
 		if(ret == null) {
 			byte[] file = loadResourceBytes(fileName);
 			if(file == null) return null;
-			Uint8Array buf = Uint8Array.create(file.length);
+			Uint8Array buf = new Uint8Array(file.length);
 			buf.set(file);
 			ret = new AudioBufferX(decodeAudioAsync(buf.getBuffer()));
 			loadedSoundFiles.put(fileName, ret);
@@ -2339,7 +2521,7 @@ public class EaglerAdapterImpl2 {
 
 	public static void handleVoiceSignal(byte[] data) {
 		try {
-			DataInputStream streamIn = new DataInputStream(new ByteArrayInputStream(data));
+			DataInputStream streamIn = new DataInputStream(new EaglerInputStream(data));
 			int sig = streamIn.read();
 			switch(sig) {
 				case VOICE_SIGNAL_GLOBAL:
@@ -2455,7 +2637,6 @@ public class EaglerAdapterImpl2 {
 
 	public static final void enableVoice(Voice.VoiceChannel enable) {
 		if (enabledChannel == enable) return;
-		voiceClient.resetPeerStates();
 		if (enabledChannel == Voice.VoiceChannel.PROXIMITY) {
 			for (String username : nearbyPlayers) voiceClient.signalDisconnect(username, false);
 			for (String username : recentlyNearbyPlayers) voiceClient.signalDisconnect(username, false);
@@ -2575,13 +2756,10 @@ public class EaglerAdapterImpl2 {
 	public static final Voice.VoiceChannel getVoiceChannel() {
 		return enabledChannel;
 	}
-	public static final boolean voicePeerErrored() {
-		return voiceClient.getPeerState() == EaglercraftVoiceClient.PEERSTATE_FAILED || voiceClient.getPeerStateConnect() == EaglercraftVoiceClient.PEERSTATE_FAILED || voiceClient.getPeerStateInitial() == EaglercraftVoiceClient.PEERSTATE_FAILED || voiceClient.getPeerStateDesc() == EaglercraftVoiceClient.PEERSTATE_FAILED || voiceClient.getPeerStateIce() == EaglercraftVoiceClient.PEERSTATE_FAILED;
-	}
 	public static final Voice.VoiceStatus getVoiceStatus() {
 		return (!voiceAvailable() || !voiceAllowed()) ? Voice.VoiceStatus.UNAVAILABLE :
 			(voiceClient.getReadyState() != EaglercraftVoiceClient.READYSTATE_DEVICE_INITIALIZED ?
-					Voice.VoiceStatus.CONNECTING : (voicePeerErrored() ? Voice.VoiceStatus.UNAVAILABLE : Voice.VoiceStatus.CONNECTED));
+					Voice.VoiceStatus.CONNECTING : Voice.VoiceStatus.CONNECTED);
 	}
 
 	private static boolean talkStatus = false;
@@ -2629,8 +2807,8 @@ public class EaglerAdapterImpl2 {
 		return volumeSpeak;
 	}
 
-	private static final Set<String> mutedSet = new HashSet();
-	private static final Set<String> speakingSet = new HashSet();
+	private static final Set<String> mutedSet = new HashSet<>();
+	private static final Set<String> speakingSet = new HashSet<>();
 	public static final Set<String> getVoiceListening() {
 		return voiceGains.keySet();
 	}
@@ -2657,7 +2835,7 @@ public class EaglerAdapterImpl2 {
 		speakingSet.clear();
 		for (String username : voiceAnalysers.keySet()) {
 			AnalyserNode analyser = voiceAnalysers.get(username);
-			Uint8Array array = Uint8Array.create(analyser.getFrequencyBinCount());
+			Uint8Array array = new Uint8Array(analyser.getFrequencyBinCount());
 			analyser.getByteFrequencyData(array);
 			int len = array.getLength();
 			for (int i = 0; i < len; i++) {
@@ -2744,11 +2922,11 @@ public class EaglerAdapterImpl2 {
 	}
 	
 	public static final Object _wCreateLowLevelIntBuffer(int len) {
-		return Int32Array.create(len);
+		return new Int32Array(len);
 	}
 	
 	private static int appendbufferindex = 0;
-	private static Int32Array appendbuffer = Int32Array.create(ArrayBuffer.create(525000*4));
+	private static Int32Array appendbuffer = new Int32Array(new ArrayBuffer(525000*4));
 
 	public static final void _wAppendLowLevelBuffer(Object arr) {
 		Int32Array a = ((Int32Array)arr);
@@ -2759,7 +2937,7 @@ public class EaglerAdapterImpl2 {
 	}
 	
 	public static final Object _wGetLowLevelBuffersAppended() {
-		Int32Array ret = Int32Array.create(appendbuffer.getBuffer(), 0, appendbufferindex);
+		Int32Array ret = new Int32Array(appendbuffer.getBuffer(), 0, appendbufferindex);
 		appendbufferindex = 0;
 		return ret;
 	}
@@ -2777,7 +2955,7 @@ public class EaglerAdapterImpl2 {
 		public void onMessage(String channel, ArrayBuffer buf);
 	}
 	
-	private static final HashMap<String,List<PKT>> workerMessageQueue = new HashMap();
+	private static final HashMap<String,List<PKT>> workerMessageQueue = new HashMap<>();
 	
 	private static Worker server = null;
 	private static boolean serverAlive = false;
@@ -2804,13 +2982,7 @@ public class EaglerAdapterImpl2 {
 					return;
 				}
 				
-				Uint8Array a = Uint8Array.create(buf);
-				byte[] pkt = new byte[a.getLength()];
-				for(int i = 0; i < pkt.length; ++i) {
-					pkt[i] = (byte) a.get(i);
-				}
-				
-				existingQueue.add(new PKT(channel, pkt));
+				existingQueue.add(new PKT(channel, TeaVMUtils.wrapByteArrayBuffer(buf)));
 			}
 		}
 		
@@ -2832,7 +3004,7 @@ public class EaglerAdapterImpl2 {
 			server.terminate();
 		}
 		workerMessageQueue.put("IPC", new LinkedList<PKT>());
-		server = Worker.create(integratedServerScript);
+		server = new Worker(integratedServerScript);
 		server.onError(new EventListener<ErrorEvent>() {
 			@Override
 			public void handleEvent(ErrorEvent evt) {
@@ -2860,10 +3032,7 @@ public class EaglerAdapterImpl2 {
 	}
 	
 	public static final void sendToIntegratedServer(String channel, byte[] pkt) {
-		ArrayBuffer arb = ArrayBuffer.create(pkt.length);
-		Uint8Array ar = Uint8Array.create(arb);
-		ar.set(pkt);
-		sendWorkerPacket(server, channel, arb);
+		sendWorkerPacket(server, channel, TeaVMUtils.unwrapArrayBuffer(pkt));
 		//System.out.println("[Client][WRITE][" + channel + "]: " + pkt.length);
 	}
 	
@@ -2873,7 +3042,7 @@ public class EaglerAdapterImpl2 {
 				System.err.println("Tried to enable existing channel '" + channel + "' again");
 			}else {
 				System.out.println("[Client][ENABLE][" + channel + "]");
-				workerMessageQueue.put(channel, new LinkedList());
+				workerMessageQueue.put(channel, new LinkedList<>());
 			}
 		}
 	}
@@ -2907,9 +3076,7 @@ public class EaglerAdapterImpl2 {
 	private static final native void downloadBytesImpl(String str, ArrayBuffer buf);
 	
 	public static final void downloadBytes(String str, byte[] dat) {
-		ArrayBuffer d = ArrayBuffer.create(dat.length);
-		Uint8Array.create(d).set(dat);
-		downloadBytesImpl(str, d);
+		downloadBytesImpl(str, TeaVMUtils.unwrapArrayBuffer(dat));
 	}
 	
 	@JSFunctor
@@ -2923,11 +3090,11 @@ public class EaglerAdapterImpl2 {
 	public static native String getClipboard();
 	
 	private static void getClipboard(final AsyncCallback<String> cb) {
-		final long start = System.currentTimeMillis();
+		final long start = steadyTimeMillis();
 		getClipboard0(new StupidFunctionResolveString() {
 			@Override
 			public void resolveStr(String s) {
-				if(System.currentTimeMillis() - start > 500l) {
+				if(steadyTimeMillis() - start > 500l) {
 					unpressCTRL = true;
 				}
 				cb.complete(s);
@@ -2946,8 +3113,8 @@ public class EaglerAdapterImpl2 {
 	
 	private static class ServerQueryImpl implements ServerQuery {
 		
-		private final LinkedList<QueryResponse> queryResponses = new LinkedList();
-		private final LinkedList<byte[]> queryResponsesBytes = new LinkedList();
+		private final LinkedList<QueryResponse> queryResponses = new LinkedList<>();
+		private final LinkedList<byte[]> queryResponsesBytes = new LinkedList<>();
 		private final String type;
 		private boolean open;
 		private boolean alive;
@@ -2965,7 +3132,7 @@ public class EaglerAdapterImpl2 {
 			pingTimer = -1l;
 			WebSocket s = null;
 			try {
-				s = WebSocket.create(uri);
+				s = new WebSocket(uri);
 				s.setBinaryType("arraybuffer");
 				open = true;
 			}catch(Throwable t) {
@@ -2980,14 +3147,14 @@ public class EaglerAdapterImpl2 {
 			}
 			sock = s;
 			if(open) {
-				sock.onOpen(new EventListener<MessageEvent>() {
+				sock.addEventListener("open", new EventListener<Event>() {
 					@Override
-					public void handleEvent(MessageEvent evt) {
-						pingStart = System.currentTimeMillis();
+					public void handleEvent(Event evt) {
+						pingStart = steadyTimeMillis();
 						sock.send("Accept: " + type);
 					}
 				});
-				sock.onClose(new EventListener<CloseEvent>() {
+				sock.addEventListener("close", new EventListener<CloseEvent>() {
 					@Override
 					public void handleEvent(CloseEvent evt) {
 						open = false;
@@ -3000,12 +3167,12 @@ public class EaglerAdapterImpl2 {
 						}
 					}
 				});
-				sock.onMessage(new EventListener<MessageEvent>() {
+				sock.addEventListener("message", new EventListener<MessageEvent>() {
 					@Override
 					public void handleEvent(MessageEvent evt) {
 						alive = true;
 						if(pingTimer == -1) {
-							pingTimer = System.currentTimeMillis() - pingStart;
+							pingTimer = steadyTimeMillis() - pingStart;
 						}
 						if(isString(evt.getData())) {
 							try {
@@ -3036,12 +3203,7 @@ public class EaglerAdapterImpl2 {
 								System.err.println("Query response could not be parsed: " + t.toString());
 							}
 						}else {
-							Uint8Array a = Uint8Array.create(evt.getDataAsArray());
-							byte[] b = new byte[a.getByteLength()];
-							for(int i = 0; i < b.length; ++i) {
-								b[i] = (byte) (a.get(i) & 0xFF);
-							}
-							queryResponsesBytes.add(b);
+							queryResponsesBytes.add(TeaVMUtils.wrapByteArrayBuffer(evt.getDataAsArray()));
 						}
 					}
 				});
@@ -3120,9 +3282,9 @@ public class EaglerAdapterImpl2 {
 			int checkIntegerA = 0xFF000000;
 			int checkIntegerB = 0x000000FF;
 			
-			ArrayBuffer buf = ArrayBuffer.create(4);
-			Int32Array bufW = Int32Array.create(buf);
-			Uint8Array bufR = Uint8Array.create(buf);
+			ArrayBuffer buf = new ArrayBuffer(4);
+			Int32Array bufW = new Int32Array(buf);
+			Uint8Array bufR = new Uint8Array(buf);
 			
 			bufW.set(0, checkIntegerA);
 
@@ -3170,14 +3332,8 @@ public class EaglerAdapterImpl2 {
 		return !isLittleEndian;
 	}
 	
-	private static final ArrayBuffer convertToArrayBuffer(byte[] arr) {
-		Uint8Array buf = Uint8Array.create(arr.length);
-		buf.set(arr);
-		return buf.getBuffer();
-	}
-	
-	private static final Map<String,Long> relayQueryLimited = new HashMap();
-	private static final Map<String,Long> relayQueryBlocked = new HashMap();
+	private static final Map<String,Long> relayQueryLimited = new HashMap<>();
+	private static final Map<String,Long> relayQueryBlocked = new HashMap<>();
 	
 	private static class RelayQueryImpl implements RelayQuery {
 
@@ -3205,8 +3361,8 @@ public class EaglerAdapterImpl2 {
 			this.uri = uri;
 			WebSocket s = null;
 			try {
-				connectionOpenedAt = System.currentTimeMillis();
-				s = WebSocket.create(uri);
+				connectionOpenedAt = steadyTimeMillis();
+				s = new WebSocket(uri);
 				s.setBinaryType("arraybuffer");
 				open = true;
 				failed = false;
@@ -3218,12 +3374,12 @@ public class EaglerAdapterImpl2 {
 				return;
 			}
 			sock = s;
-			sock.onOpen(new EventListener<MessageEvent>() {
+			sock.addEventListener("open", new EventListener<Event>() {
 				@Override
-				public void handleEvent(MessageEvent evt) {
+				public void handleEvent(Event evt) {
 					try {
-						connectionPingStart = System.currentTimeMillis();
-						nativeBinarySend(sock, convertToArrayBuffer(
+						connectionPingStart = steadyTimeMillis();
+						nativeBinarySend(sock, TeaVMUtils.unwrapArrayBuffer(
 								IPacket.writePacket(new IPacket00Handshake(0x03, IntegratedServer.preferredRelayVersion, ""))
 						));
 					} catch (IOException e) {
@@ -3233,18 +3389,14 @@ public class EaglerAdapterImpl2 {
 					}
 				}
 			});
-			sock.onMessage(new EventListener<MessageEvent>() {
+			sock.addEventListener("message", new EventListener<MessageEvent>() {
 				@Override
 				public void handleEvent(MessageEvent evt) {
 					if(evt.getData() != null && !isString(evt.getData())) {
 						hasRecievedAnyData = true;
-						Uint8Array buf = Uint8Array.create(evt.getDataAsArray());
-						byte[] arr = new byte[buf.getLength()];
-						for(int i = 0; i < arr.length; ++i) {
-							arr[i] = (byte)buf.get(i);
-						}
+						byte[] arr = TeaVMUtils.wrapByteArrayBuffer(evt.getDataAsArray());
 						if(arr.length == 2 && arr[0] == (byte)0xFC) {
-							long millis = System.currentTimeMillis();
+							long millis = steadyTimeMillis();
 							if(arr[1] == (byte)0x00 || arr[1] == (byte)0x01) {
 								rateLimitStatus = RateLimit.BLOCKED;
 								relayQueryLimited.put(RelayQueryImpl.this.uri, millis);
@@ -3262,12 +3414,12 @@ public class EaglerAdapterImpl2 {
 						}else {
 							if(open) {
 								try {
-									IPacket pkt = IPacket.readPacket(new DataInputStream(new ByteArrayInputStream(arr)));
+									IPacket pkt = IPacket.readPacket(new DataInputStream(new EaglerInputStream(arr)));
 									if(pkt instanceof IPacket69Pong) {
 										IPacket69Pong ipkt = (IPacket69Pong)pkt;
 										versError = RelayQuery.VersionMismatch.COMPATIBLE;
 										if(connectionPingTimer == -1) {
-											connectionPingTimer = System.currentTimeMillis() - connectionPingStart;
+											connectionPingTimer = steadyTimeMillis() - connectionPingStart;
 										}
 										vers = ipkt.protcolVersion;
 										comment = ipkt.comment;
@@ -3307,7 +3459,7 @@ public class EaglerAdapterImpl2 {
 					}
 				}
 			});
-			sock.onClose(new EventListener<CloseEvent>() {
+			sock.addEventListener("close", new EventListener<CloseEvent>() {
 				@Override
 				public void handleEvent(CloseEvent evt) {
 					open = false;
@@ -3315,14 +3467,14 @@ public class EaglerAdapterImpl2 {
 						failed = true;
 						Long l = relayQueryBlocked.get(uri);
 						if(l != null) {
-							if(System.currentTimeMillis() - l.longValue() < 400000l) {
+							if(steadyTimeMillis() - l.longValue() < 400000l) {
 								rateLimitStatus = RateLimit.LOCKED;
 								return;
 							}
 						}
 						l = relayQueryLimited.get(uri);
 						if(l != null) {
-							if(System.currentTimeMillis() - l.longValue() < 900000l) {
+							if(steadyTimeMillis() - l.longValue() < 900000l) {
 								rateLimitStatus = RateLimit.BLOCKED;
 								return;
 							}
@@ -3437,7 +3589,7 @@ public class EaglerAdapterImpl2 {
 	}
 	
 	public static final RelayQuery openRelayQuery(String addr) {
-		long millis = System.currentTimeMillis();
+		long millis = steadyTimeMillis();
 		
 		Long l = relayQueryBlocked.get(addr);
 		if(l != null && millis - l.longValue() < 60000l) {
@@ -3471,7 +3623,7 @@ public class EaglerAdapterImpl2 {
 			this.uri = uri;
 			WebSocket s = null;
 			try {
-				s = WebSocket.create(uri);
+				s = new WebSocket(uri);
 				s.setBinaryType("arraybuffer");
 				open = true;
 				failed = false;
@@ -3482,11 +3634,11 @@ public class EaglerAdapterImpl2 {
 				return;
 			}
 			sock = s;
-			sock.onOpen(new EventListener<MessageEvent>() {
+			sock.addEventListener("open", new EventListener<Event>() {
 				@Override
-				public void handleEvent(MessageEvent evt) {
+				public void handleEvent(Event evt) {
 					try {
-						nativeBinarySend(sock, convertToArrayBuffer(
+						nativeBinarySend(sock, TeaVMUtils.unwrapArrayBuffer(
 								IPacket.writePacket(new IPacket00Handshake(0x04, IntegratedServer.preferredRelayVersion, ""))
 						));
 					} catch (IOException e) {
@@ -3497,18 +3649,14 @@ public class EaglerAdapterImpl2 {
 					}
 				}
 			});
-			sock.onMessage(new EventListener<MessageEvent>() {
+			sock.addEventListener("message", new EventListener<MessageEvent>() {
 				@Override
 				public void handleEvent(MessageEvent evt) {
 					if(evt.getData() != null && !isString(evt.getData())) {
 						hasRecievedAnyData = true;
-						Uint8Array buf = Uint8Array.create(evt.getDataAsArray());
-						byte[] arr = new byte[buf.getLength()];
-						for(int i = 0; i < arr.length; ++i) {
-							arr[i] = (byte)buf.get(i);
-						}
+						byte[] arr = TeaVMUtils.wrapByteArrayBuffer(evt.getDataAsArray());
 						if(arr.length == 2 && arr[0] == (byte)0xFC) {
-							long millis = System.currentTimeMillis();
+							long millis = steadyTimeMillis();
 							if(arr[1] == (byte)0x00 || arr[1] == (byte)0x01) {
 								rateLimitStatus = RateLimit.BLOCKED;
 								relayQueryLimited.put(RelayWorldsQueryImpl.this.uri, millis);
@@ -3526,7 +3674,7 @@ public class EaglerAdapterImpl2 {
 						}else {
 							if(open) {
 								try {
-									IPacket pkt = IPacket.readPacket(new DataInputStream(new ByteArrayInputStream(arr)));
+									IPacket pkt = IPacket.readPacket(new DataInputStream(new EaglerInputStream(arr)));
 									if(pkt instanceof IPacket07LocalWorlds) {
 										worlds = ((IPacket07LocalWorlds)pkt).worldsList;
 										sock.close();
@@ -3564,7 +3712,7 @@ public class EaglerAdapterImpl2 {
 					}
 				}
 			});
-			sock.onClose(new EventListener<CloseEvent>() {
+			sock.addEventListener("close", new EventListener<CloseEvent>() {
 				@Override
 				public void handleEvent(CloseEvent evt) {
 					open = false;
@@ -3572,14 +3720,14 @@ public class EaglerAdapterImpl2 {
 						failed = true;
 						Long l = relayQueryBlocked.get(uri);
 						if(l != null) {
-							if(System.currentTimeMillis() - l.longValue() < 400000l) {
+							if(steadyTimeMillis() - l.longValue() < 400000l) {
 								rateLimitStatus = RateLimit.LOCKED;
 								return;
 							}
 						}
 						l = relayQueryLimited.get(uri);
 						if(l != null) {
-							if(System.currentTimeMillis() - l.longValue() < 900000l) {
+							if(steadyTimeMillis() - l.longValue() < 900000l) {
 								rateLimitStatus = RateLimit.BLOCKED;
 								return;
 							}
@@ -3653,7 +3801,7 @@ public class EaglerAdapterImpl2 {
 
 		@Override
 		public List<LocalWorld> getWorlds() {
-			return new ArrayList(0);
+			return new ArrayList<>(0);
 		}
 
 		@Override
@@ -3663,7 +3811,7 @@ public class EaglerAdapterImpl2 {
 	}
 	
 	public static final RelayWorldsQuery openRelayWorldsQuery(String addr) {
-		long millis = System.currentTimeMillis();
+		long millis = steadyTimeMillis();
 		
 		Long l = relayQueryBlocked.get(addr);
 		if(l != null && millis - l.longValue() < 60000l) {
@@ -3689,14 +3837,14 @@ public class EaglerAdapterImpl2 {
 		
 		private boolean hasRecievedAnyData;
 
-		private final List<Throwable> exceptions = new LinkedList();
-		private final List<IPacket> packets = new LinkedList();
+		private final List<Throwable> exceptions = new LinkedList<>();
+		private final List<IPacket> packets = new LinkedList<>();
 		
 		private RelayServerSocketImpl(String uri, int timeout) {
 			this.uri = uri;
 			WebSocket s = null;
 			try {
-				s = WebSocket.create(uri);
+				s = new WebSocket(uri);
 				s.setBinaryType("arraybuffer");
 				open = false;
 				closed = false;
@@ -3710,24 +3858,20 @@ public class EaglerAdapterImpl2 {
 				return;
 			}
 			sock = s;
-			sock.onOpen(new EventListener<MessageEvent>() {
+			sock.addEventListener("open", new EventListener<Event>() {
 				@Override
-				public void handleEvent(MessageEvent evt) {
+				public void handleEvent(Event evt) {
 					open = true;
 				}
 			});
-			sock.onMessage(new EventListener<MessageEvent>() {
+			sock.addEventListener("message", new EventListener<MessageEvent>() {
 				@Override
 				public void handleEvent(MessageEvent evt) {
 					if(evt.getData() != null && !isString(evt.getData())) {
 						hasRecievedAnyData = true;
-						Uint8Array buf = Uint8Array.create(evt.getDataAsArray());
-						byte[] arr = new byte[buf.getLength()];
-						for(int i = 0; i < arr.length; ++i) {
-							arr[i] = (byte)buf.get(i);
-						}
+						byte[] arr = TeaVMUtils.wrapByteArrayBuffer(evt.getDataAsArray());
 						try {
-							packets.add(IPacket.readPacket(new DataInputStream(new ByteArrayInputStream(arr))));
+							packets.add(IPacket.readPacket(new DataInputStream(new EaglerInputStream(arr))));
 						} catch (IOException e) {
 							exceptions.add(e);
 							System.err.println("Relay Socket Error: " + e.toString());
@@ -3740,7 +3884,7 @@ public class EaglerAdapterImpl2 {
 					}
 				}
 			});
-			sock.onClose(new EventListener<CloseEvent>() {
+			sock.addEventListener("close", new EventListener<CloseEvent>() {
 				@Override
 				public void handleEvent(CloseEvent evt) {
 					if(!hasRecievedAnyData) {
@@ -3799,7 +3943,7 @@ public class EaglerAdapterImpl2 {
 		@Override
 		public void writePacket(IPacket pkt) {
 			try {
-				nativeBinarySend(sock, convertToArrayBuffer(IPacket.writePacket(pkt)));
+				nativeBinarySend(sock, TeaVMUtils.unwrapArrayBuffer(IPacket.writePacket(pkt)));
 			} catch (Throwable e) {
 				System.err.println("Relay connection error: " + e.toString());
 				e.printStackTrace();
@@ -3906,7 +4050,7 @@ public class EaglerAdapterImpl2 {
 	}
 	
 	public static final RelayServerSocket openRelayConnection(String addr, int timeout) {
-		long millis = System.currentTimeMillis();
+		long millis = steadyTimeMillis();
 		
 		Long l = relayQueryBlocked.get(addr);
 		if(l != null && millis - l.longValue() < 60000l) {
@@ -3947,7 +4091,7 @@ public class EaglerAdapterImpl2 {
 	}
 	
 	public static final void clientLANSendPacket(byte[] pkt) {
-		rtcLANClient.sendPacketToServer(convertToArrayBuffer(pkt));
+		rtcLANClient.sendPacketToServer(TeaVMUtils.unwrapArrayBuffer(pkt));
 	}
 	
 	public static final byte[] clientLANReadPacket() {
@@ -3979,12 +4123,7 @@ public class EaglerAdapterImpl2 {
 			rtcLANClient.setRemotePacketHandler(new EaglercraftLANClient.RemotePacketHandler() {
 				@Override
 				public void call(ArrayBuffer buffer) {
-					Uint8Array array = Uint8Array.create(buffer);
-					byte[] ret = new byte[array.getByteLength()];
-					for(int i = 0; i < ret.length; ++i) {
-						ret[i] = (byte) array.get(i);
-					}
-					clientLANPacketBuffer.add(ret);
+					clientLANPacketBuffer.add(TeaVMUtils.wrapByteArrayBuffer(buffer));
 				}
 			});
 			rtcLANClient.setRemoteDisconnectHandler(new EaglercraftLANClient.ClientSignalHandler() {
@@ -4089,12 +4228,7 @@ public class EaglerAdapterImpl2 {
 			rtcLANServer.setRemoteClientPacketHandler(new EaglercraftLANServer.PeerPacketHandler() {
 				@Override
 				public void call(String peerId, ArrayBuffer buffer) {
-					Uint8Array array = Uint8Array.create(buffer);
-					byte[] ret = new byte[array.getByteLength()];
-					for(int i = 0; i < ret.length; ++i) {
-						ret[i] = (byte) array.get(i);
-					}
-					serverLANEventBuffer.add(new LANPeerEvent.LANPeerPacketEvent(peerId, ret));
+					serverLANEventBuffer.add(new LANPeerEvent.LANPeerPacketEvent(peerId, TeaVMUtils.wrapByteArrayBuffer(buffer)));
 				}
 			});
 			rtcLANServer.setRemoteClientDisconnectHandler(new EaglercraftLANServer.ClientSignalHandler() {
@@ -4125,8 +4259,28 @@ public class EaglerAdapterImpl2 {
 			return null;
 		}
 	}
+	
+	public static final List<LANPeerEvent> serverLANGetAllEvent(String clientId) {
+		if(serverLANEventBuffer.size() > 0) {
+			List<LANPeerEvent> lst = null;
+			Iterator<LANPeerEvent> i = serverLANEventBuffer.iterator();
+			while(i.hasNext()) {
+				LANPeerEvent evt = i.next();
+				if(evt.getPeerId().equals(clientId)) {
+					i.remove();
+					if(lst == null) {
+						lst = new ArrayList<>();
+					}
+					lst.add(evt);
+				}
+			}
+			return lst;
+		}else {
+			return null;
+		}
+	}
 
-	private static final int fragmentSize = 65536;
+	private static final int fragmentSize = 0xFF00;
 
 	public static final void serverLANWritePacket(String peer, byte[] data) {
 		if (data.length > fragmentSize) {
@@ -4134,17 +4288,13 @@ public class EaglerAdapterImpl2 {
 				byte[] fragData = new byte[((i + fragmentSize > data.length) ? (data.length % fragmentSize) : fragmentSize) + 1];
 				System.arraycopy(data, i, fragData, 1, fragData.length - 1);
 				fragData[0] = (i + fragmentSize < data.length) ? (byte) 1 : (byte) 0;
-				ArrayBuffer arr = ArrayBuffer.create(fragData.length);
-				Uint8Array.create(arr).set(fragData);
-				rtcLANServer.sendPacketToRemoteClient(peer, arr);
+				rtcLANServer.sendPacketToRemoteClient(peer, TeaVMUtils.unwrapArrayBuffer(fragData));
 			}
 		} else {
 			byte[] sendData = new byte[data.length + 1];
 			sendData[0] = 0;
 			System.arraycopy(data, 0, sendData, 1, data.length);
-			ArrayBuffer arr = ArrayBuffer.create(sendData.length);
-			Uint8Array.create(arr).set(sendData);
-			rtcLANServer.sendPacketToRemoteClient(peer, arr);
+			rtcLANServer.sendPacketToRemoteClient(peer, TeaVMUtils.unwrapArrayBuffer(sendData));
 		}
 	}
 	
@@ -4167,5 +4317,41 @@ public class EaglerAdapterImpl2 {
 	public static final int countPeers() {
 		return rtcLANServer.countPeers();
 	}
-	
+
+	private static final JSObject steadyTimeFunc = getSteadyTimeFunc();
+
+	@JSBody(params = { }, script = "return ((typeof performance !== \"undefined\") && (typeof performance.now === \"function\"))"
+			+ "? performance.now.bind(performance)"
+			+ ": (function(epochStart){ return function() { return Date.now() - epochStart; }; })(Date.now());")
+	private static native JSObject getSteadyTimeFunc();
+
+	@JSBody(params = { "steadyTimeFunc" }, script = "return steadyTimeFunc();")
+	private static native double steadyTimeMillis0(JSObject steadyTimeFunc);
+
+	public static long steadyTimeMillis() {
+		return (long)steadyTimeMillis0(steadyTimeFunc);
+	}
+
+	public static long nanoTime() {
+		return (long)(steadyTimeMillis0(steadyTimeFunc) * 1000000.0);
+	}
+
+	@Async
+	public static native void sleep(int millis);
+
+	private static void sleep(int millis, final AsyncCallback<Void> callback) {
+		Platform.schedule(new DumbSleepHandler(callback), millis);
+	}
+
+	private static class DumbSleepHandler implements PlatformRunnable {
+		private final AsyncCallback<Void> callback;
+		private DumbSleepHandler(AsyncCallback<Void> callback) {
+			this.callback = callback;
+		}
+		@Override
+		public void run() {
+			callback.complete(null);
+		}
+	}
+
 }

@@ -22,7 +22,7 @@ public class TexturedQuad {
 		par1ArrayOfPositionTextureVertex[1] = par1ArrayOfPositionTextureVertex[1].setTexturePosition((float) par2 / par6 + var8, (float) par3 / par7 + var9);
 		par1ArrayOfPositionTextureVertex[2] = par1ArrayOfPositionTextureVertex[2].setTexturePosition((float) par2 / par6 + var8, (float) par5 / par7 - var9);
 		par1ArrayOfPositionTextureVertex[3] = par1ArrayOfPositionTextureVertex[3].setTexturePosition((float) par4 / par6 - var8, (float) par5 / par7 - var9);
-		this.normal = normal;
+		this.normal = normal.normalize();
 	}
 
 	public void flipFace() {

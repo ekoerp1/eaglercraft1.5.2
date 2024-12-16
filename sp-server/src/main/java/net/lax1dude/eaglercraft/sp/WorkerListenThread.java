@@ -8,7 +8,6 @@ import java.util.List;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.src.NetHandler;
-import net.minecraft.src.NetServerHandler;
 
 public class WorkerListenThread {
 	/** Reference to the MinecraftServer object. */
@@ -82,7 +81,7 @@ public class WorkerListenThread {
 		
 		deleteDeadConnections();
 		
-		List<NetHandler> conns = new ArrayList(this.connections);
+		List<NetHandler> conns = new ArrayList<>(this.connections);
 		for (NetHandler var2 : conns) {
 			var2.handlePackets();
 		}

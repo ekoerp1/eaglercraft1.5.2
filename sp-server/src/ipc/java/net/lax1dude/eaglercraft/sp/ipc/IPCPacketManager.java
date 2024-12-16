@@ -8,7 +8,7 @@ import java.util.function.Supplier;
 
 public class IPCPacketManager {
 	
-	public static final HashMap<Integer, Supplier<IPCPacketBase>> mappings = new HashMap();
+	public static final HashMap<Integer, Supplier<IPCPacketBase>> mappings = new HashMap<>();
 
 	public static final IPCInputStream IPC_INPUT_STREAM = new IPCInputStream();
 	public static final IPCOutputStream IPC_OUTPUT_STREAM = new IPCOutputStream();

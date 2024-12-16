@@ -5,7 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-import net.lax1dude.eaglercraft.EaglerInflater;
+import net.lax1dude.eaglercraft.EaglerMisc;
 
 public class Packet56MapChunks extends Packet {
 	private int[] chunkPostX;
@@ -56,7 +56,7 @@ public class Packet56MapChunks extends Packet {
 				chunkDataNotCompressed = new byte[this.dataLength];
 			}
 			par1DataInputStream.readFully(chunkDataNotCompressed, 0, this.dataLength);
-			var3 = EaglerInflater.uncompress(chunkDataNotCompressed);
+			var3 = EaglerMisc.uncompress(chunkDataNotCompressed);
 		}
 
 		int var5 = 0;

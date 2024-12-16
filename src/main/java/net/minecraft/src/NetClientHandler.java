@@ -119,20 +119,20 @@ public class NetClientHandler extends NetHandler {
 				RateLimit r = EaglerAdapter.getRateLimitStatus();
 				if(r != null) {
 					if(r == RateLimit.NOW_LOCKED) {
-						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.ratelimit.ipNowLocked", "disconnect.endOfStream", null));
+						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.ratelimit.ipNowLocked", "disconnect.endOfStream"));
 					}else if(r == RateLimit.LOCKED) {
-						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.ratelimit.ipLocked", "disconnect.endOfStream", null));
+						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.ratelimit.ipLocked", "disconnect.endOfStream"));
 					}else if(r == RateLimit.BLOCKED) {
-						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.ratelimit.ipBlocked", "disconnect.endOfStream", null));
+						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.ratelimit.ipBlocked", "disconnect.endOfStream"));
 					}else if(r == RateLimit.FAILED_POSSIBLY_LOCKED) {
-						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.ratelimit.ipFailedPossiblyLocked", "disconnect.endOfStream", null));
+						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.ratelimit.ipFailedPossiblyLocked", "disconnect.endOfStream"));
 					}else {
-						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.disconnected", "RateLimit." + r.name(), null));
+						this.mc.displayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.disconnected", "RateLimit." + r.name()));
 					}
 				}else {
 					if(!(this.mc.currentScreen instanceof GuiDisconnected) && !(this.mc.currentScreen instanceof GuiScreenSingleplayerException) &&
 							!(this.mc.currentScreen instanceof GuiScreenSingleplayerLoading)) {
-						this.mc.stopServerAndDisplayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.disconnected", "disconnect.endOfStream", null));
+						this.mc.stopServerAndDisplayGuiScreen(new GuiDisconnected(backToMenu(), "disconnect.disconnected", "disconnect.endOfStream"));
 					}
 				}
 				this.disconnected = true;
@@ -155,8 +155,9 @@ public class NetClientHandler extends NetHandler {
 
 	public void handleLogin(Packet1Login par1Packet1Login) {
 		this.mc.playerController = new PlayerControllerMP(this.mc, this);
-		this.worldClient = new WorldClient(this, new WorldSettings(0L, par1Packet1Login.gameType, false, par1Packet1Login.hardcoreMode, par1Packet1Login.terrainType), par1Packet1Login.dimension, par1Packet1Login.difficultySetting,
-				this.mc.mcProfiler);
+		this.worldClient = new WorldClient(this, new WorldSettings(0L, par1Packet1Login.gameType, false,
+				par1Packet1Login.hardcoreMode, par1Packet1Login.terrainType), par1Packet1Login.dimension,
+				par1Packet1Login.difficultySetting);
 		this.worldClient.isRemote = true;
 		this.mc.loadWorld(this.worldClient);
 		this.mc.thePlayer.dimension = par1Packet1Login.dimension;
@@ -720,8 +721,10 @@ public class NetClientHandler extends NetHandler {
 		if (par1Packet9Respawn.respawnDimension != this.mc.thePlayer.dimension) {
 			this.doneLoadingTerrain = false;
 			Scoreboard var2 = this.worldClient.getScoreboard();
-			this.worldClient = new WorldClient(this, new WorldSettings(0L, par1Packet9Respawn.gameType, false, this.mc.theWorld.getWorldInfo().isHardcoreModeEnabled(), par1Packet9Respawn.terrainType), par1Packet9Respawn.respawnDimension,
-					par1Packet9Respawn.difficulty, this.mc.mcProfiler);
+			this.worldClient = new WorldClient(this,
+					new WorldSettings(0L, par1Packet9Respawn.gameType, false,
+							this.mc.theWorld.getWorldInfo().isHardcoreModeEnabled(), par1Packet9Respawn.terrainType),
+					par1Packet9Respawn.respawnDimension, par1Packet9Respawn.difficulty);
 			this.worldClient.func_96443_a(var2);
 			this.worldClient.isRemote = true;
 			this.mc.loadWorld(this.worldClient);
@@ -1187,7 +1190,42 @@ public class NetClientHandler extends NetHandler {
 	}
 
 	public void handleCustomPayload(Packet250CustomPayload par1Packet250CustomPayload) {
-		if ("MC|TrList".equals(par1Packet250CustomPayload.channel)) {
+		if ("MC|TPack".equals(par1Packet250CustomPayload.channel)) {
+			String[] var2 = (new String(par1Packet250CustomPayload.data))
+					.split("\u0000");
+			String var3 = var2[0];
+
+			if (var2[1].equals("16"))
+			{
+				if (this.mc.texturePackList.getAcceptsTextures())
+				{
+					this.mc.texturePackList.requestDownloadOfTexture(var3);
+				}
+				else if (this.mc.texturePackList.func_77300_f())
+				{
+					this.mc.displayGuiScreen(new GuiYesNo(
+							new GuiScreen() {
+								public void confirmClicked(boolean par1, int par2) {
+									mc = Minecraft.getMinecraft();
+
+									if (mc.getServerData() != null) {
+										mc.getServerData().setAcceptsTextures(par1);
+									}
+
+									if (par1) {
+										mc.texturePackList.requestDownloadOfTexture(var3);
+									}
+
+									mc.displayGuiScreen(null);
+								}
+							},
+							StringTranslate.getInstance().translateKey(
+									"multiplayer.texturePrompt.line1"),
+							StringTranslate.getInstance().translateKey(
+									"multiplayer.texturePrompt.line2"), 0));
+				}
+			}
+		} else if ("MC|TrList".equals(par1Packet250CustomPayload.channel)) {
 			DataInputStream var8 = new DataInputStream(new ByteArrayInputStream(par1Packet250CustomPayload.data));
 
 			try {

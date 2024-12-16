@@ -9,7 +9,7 @@ class GuiTexturePackSlot extends GuiSlot {
 	final GuiTexturePacks parentTexturePackGui;
 
 	public GuiTexturePackSlot(GuiTexturePacks par1GuiTexturePacks) {
-		super(GuiTexturePacks.func_73950_a(par1GuiTexturePacks), par1GuiTexturePacks.width, par1GuiTexturePacks.height, 32, par1GuiTexturePacks.height - 55 + 4, 36);
+		super(par1GuiTexturePacks.mc, par1GuiTexturePacks.width, par1GuiTexturePacks.height, 32, par1GuiTexturePacks.height - 55 + 4, 36);
 		this.parentTexturePackGui = par1GuiTexturePacks;
 	}
 
@@ -17,7 +17,7 @@ class GuiTexturePackSlot extends GuiSlot {
 	 * Gets the size of the current slot list.
 	 */
 	protected int getSize() {
-		return GuiTexturePacks.func_73955_b(this.parentTexturePackGui).texturePackList.availableTexturePacks().size();
+		return this.mc.texturePackList.availableTexturePacks().size();
 	}
 
 	/**
@@ -25,16 +25,10 @@ class GuiTexturePackSlot extends GuiSlot {
 	 * clicked or not
 	 */
 	protected void elementClicked(int par1, boolean par2) {
-		List var3 = GuiTexturePacks.func_73958_c(this.parentTexturePackGui).texturePackList.availableTexturePacks();
-
-		try {
-			GuiTexturePacks.func_73951_d(this.parentTexturePackGui).texturePackList.setTexturePack((ITexturePack) var3.get(par1));
-			GuiTexturePacks.func_73952_e(this.parentTexturePackGui).renderEngine.refreshTextures();
-			GuiTexturePacks.func_73962_f(this.parentTexturePackGui).renderGlobal.loadRenderers();
-		} catch (Exception var5) {
-			GuiTexturePacks.func_73959_g(this.parentTexturePackGui).texturePackList.setTexturePack((ITexturePack) var3.get(0));
-			GuiTexturePacks.func_73957_h(this.parentTexturePackGui).renderEngine.refreshTextures();
-			GuiTexturePacks.func_73956_i(this.parentTexturePackGui).renderGlobal.loadRenderers();
+		if (par1 == 0 || !this.isSelected(par1)) {
+			this.parentTexturePackGui.confirmClicked(false, par1);
+		} else {
+			this.mc.displayGuiScreen(new GuiYesNo(this.parentTexturePackGui, StatCollector.translateToLocal("texturePack.wannaDelete"), ((ITexturePack) this.mc.texturePackList.availableTexturePacks().get(par1)).getTexturePackFileName(), par1));
 		}
 	}
 
@@ -42,8 +36,8 @@ class GuiTexturePackSlot extends GuiSlot {
 	 * returns true if the element passed in is currently selected
 	 */
 	protected boolean isSelected(int par1) {
-		List var2 = GuiTexturePacks.func_73953_j(this.parentTexturePackGui).texturePackList.availableTexturePacks();
-		return GuiTexturePacks.func_73961_k(this.parentTexturePackGui).texturePackList.getSelectedTexturePack() == var2.get(par1);
+		List var2 = this.mc.texturePackList.availableTexturePacks();
+		return this.mc.texturePackList.getSelectedTexturePack() == var2.get(par1);
 	}
 
 	/**
@@ -58,8 +52,8 @@ class GuiTexturePackSlot extends GuiSlot {
 	}
 
 	protected void drawSlot(int par1, int par2, int par3, int par4, Tessellator par5Tessellator) {
-		ITexturePack var6 = (ITexturePack) GuiTexturePacks.func_96143_l(this.parentTexturePackGui).texturePackList.availableTexturePacks().get(par1);
-		var6.bindThumbnailTexture(GuiTexturePacks.func_96142_m(this.parentTexturePackGui).renderEngine);
+		ITexturePack var6 = (ITexturePack) this.mc.texturePackList.availableTexturePacks().get(par1);
+		var6.bindThumbnailTexture(this.mc.renderEngine);
 		EaglerAdapter.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		par5Tessellator.startDrawingQuads();
 		par5Tessellator.setColorOpaque_I(16777215);
@@ -78,8 +72,8 @@ class GuiTexturePackSlot extends GuiSlot {
 			var7 = var7.substring(0, 32).trim() + "...";
 		}
 
-		this.parentTexturePackGui.drawString(GuiTexturePacks.func_73954_n(this.parentTexturePackGui), var7, par2 + 32 + 2, par3 + 1, 16777215);
-		this.parentTexturePackGui.drawString(GuiTexturePacks.func_96145_o(this.parentTexturePackGui), var6.getFirstDescriptionLine(), par2 + 32 + 2, par3 + 12, 8421504);
-		this.parentTexturePackGui.drawString(GuiTexturePacks.func_96144_p(this.parentTexturePackGui), var6.getSecondDescriptionLine(), par2 + 32 + 2, par3 + 12 + 10, 8421504);
+		this.parentTexturePackGui.drawString(this.mc.fontRenderer, var7, par2 + 32 + 2, par3 + 1, 16777215);
+		this.parentTexturePackGui.drawString(this.mc.fontRenderer, var6.getFirstDescriptionLine(), par2 + 32 + 2, par3 + 12, 8421504);
+		this.parentTexturePackGui.drawString(this.mc.fontRenderer, var6.getSecondDescriptionLine(), par2 + 32 + 2, par3 + 12 + 10, 8421504);
 	}
 }

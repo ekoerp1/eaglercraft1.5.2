@@ -106,15 +106,6 @@ public class GuiIngameMenu extends GuiScreen {
 		this.drawCenteredString(this.fontRenderer, "Game menu", this.width / 2, 40, 16777215);
 		super.drawScreen(par1, par2, par3);
 		StringTranslate var1 = StringTranslate.getInstance();
-		if(par1 >= 3 && par1 < 123 && par2 >= 3 && par2 < 23) {
-			int c = 0xCCCC66;
-			EaglerAdapter.glPushMatrix();
-			EaglerAdapter.glTranslatef(126.0f, 6.0f, 0.0f);
-			EaglerAdapter.glScalef(0.8f, 0.8f, 0.8f);
-			this.drawString(fontRenderer, var1.translateKey("menu.skinCapeSettingsNote0"), 0, 0, c);
-			this.drawString(fontRenderer, var1.translateKey("menu.skinCapeSettingsNote1"), 0, 9, c);
-			EaglerAdapter.glPopMatrix();
-		}
 
 		drawString(fontRenderer, "Eaglercraft: " + ConfigConstants.version, 6, 27, 0x999999);
 		

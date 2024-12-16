@@ -38,6 +38,7 @@ public class GuiScreenRelay extends GuiScreen {
 		buttonList.add(setPrimary = new GuiButton(3, this.width / 2 + 54, this.height - 52, 100, 20, var1.translateKey("networkSettings.default")));
 		buttonList.add(new GuiButton(4, this.width / 2 - 50, this.height - 28, 100, 20, var1.translateKey("networkSettings.refresh")));
 		buttonList.add(new GuiButton(5, this.width / 2 - 154, this.height - 28, 100, 20, var1.translateKey("networkSettings.loadDefaults")));
+		buttonList.add(new GuiButton(6, this.width - 100, 0, 100, 20, var1.translateKey("networkSettings.downloadRelay")));
 		updateButtons();
 		this.slots = new GuiSlotRelay(this);
 		if(!hasPinged) {
@@ -77,7 +78,7 @@ public class GuiScreenRelay extends GuiScreen {
 				selected = 0;
 			}
 		} else if(btn.id == 4) {
-			long millis = System.currentTimeMillis();
+			long millis = EaglerAdapter.steadyTimeMillis();
 			if(millis - lastRefresh > 700l) {
 				lastRefresh = millis;
 				slots.relayManager.ping();
@@ -85,12 +86,14 @@ public class GuiScreenRelay extends GuiScreen {
 			lastRefresh += 60l;
 		} else if(btn.id == 5) {
 			slots.relayManager.loadDefaults();
-			long millis = System.currentTimeMillis();
+			long millis = EaglerAdapter.steadyTimeMillis();
 			if(millis - lastRefresh > 700l) {
 				lastRefresh = millis;
 				slots.relayManager.ping();
 			}
 			lastRefresh += 60l;
+		} else if(btn.id == 6) {
+			EaglerAdapter.downloadBytes("EaglerSPRelay.zip", EaglerAdapter.loadResourceBytes("relay_download.zip"));
 		}
 	}
 	

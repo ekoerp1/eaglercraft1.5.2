@@ -29,7 +29,7 @@ public class ExpiringSet<T> extends HashSet<T> {
 
     public void checkForExpirations() {
         Iterator<T> iterator = this.timestamps.keySet().iterator();
-        long now = System.currentTimeMillis();
+        long now = EaglerAdapter.steadyTimeMillis();
         while (iterator.hasNext()) {
             T element = iterator.next();
             if (super.contains(element)) {
@@ -48,7 +48,7 @@ public class ExpiringSet<T> extends HashSet<T> {
     public boolean add(T o) {
         checkForExpirations();
         boolean success = super.add(o);
-        if (success) timestamps.put(o, System.currentTimeMillis());
+        if (success) timestamps.put(o, EaglerAdapter.steadyTimeMillis());
         return success;
     }
 

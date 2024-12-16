@@ -52,17 +52,16 @@ public class GuiOptions extends GuiScreen {
 			++var2;
 		}
 
-		GuiButton b, b2;
+		GuiButton b;
 
 		this.buttonList.add(new GuiButton(101, this.width / 2 - 152, this.height / 6 + 96 - 6, 150, 20, var1.translateKey("options.video")));
 		this.buttonList.add(new GuiButton(100, this.width / 2 + 2, this.height / 6 + 96 - 6, 150, 20, var1.translateKey("options.controls")));
 		this.buttonList.add(new GuiButton(102, this.width / 2 - 152, this.height / 6 + 120 - 6, 150, 20, var1.translateKey("options.language")));
 		this.buttonList.add(new GuiButton(103, this.width / 2 + 2, this.height / 6 + 120 - 6, 150, 20, var1.translateKey("options.multiplayer.title")));
-		this.buttonList.add(b = new GuiButton(105, this.width / 2 - 152, this.height / 6 + 144 - 6, 150, 20, var1.translateKey("options.texture.pack")));
-		this.buttonList.add(b2 = new GuiButton(104, this.width / 2 + 2, this.height / 6 + 144 - 6, 150, 20, var1.translateKey("options.snooper.view")));
+		this.buttonList.add(new GuiButton(105, this.width / 2 - 152, this.height / 6 + 144 - 6, 150, 20, var1.translateKey("options.texture.pack")));
+		this.buttonList.add(b = new GuiButton(104, this.width / 2 + 2, this.height / 6 + 144 - 6, 150, 20, var1.translateKey("options.snooper.view")));
 		this.buttonList.add(new GuiButton(200, this.width / 2 - 100, this.height / 6 + 168, var1.translateKey("gui.done")));
 		b.enabled = false;
-		b2.enabled = false;
 
 	}
 
@@ -95,6 +94,11 @@ public class GuiOptions extends GuiScreen {
 			if (par1GuiButton.id == 103) {
 				this.mc.gameSettings.saveOptions();
 				this.mc.displayGuiScreen(new GuiScreenChatOptions(this, this.options));
+			}
+
+			if (par1GuiButton.id == 105) {
+				this.mc.gameSettings.saveOptions();
+				this.mc.displayGuiScreen(new GuiTexturePacks(this, this.options));
 			}
 
 			if (par1GuiButton.id == 200) {

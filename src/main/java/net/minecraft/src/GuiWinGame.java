@@ -7,6 +7,7 @@ import net.lax1dude.eaglercraft.EaglerAdapter;
 import net.lax1dude.eaglercraft.EaglerProfile;
 import net.lax1dude.eaglercraft.EaglercraftRandom;
 import net.lax1dude.eaglercraft.TextureLocation;
+import net.lax1dude.eaglercraft.EaglerMisc;
 import net.lax1dude.eaglercraft.adapter.Tessellator;
 
 public class GuiWinGame extends GuiScreen {
@@ -70,7 +71,8 @@ public class GuiWinGame extends GuiScreen {
 				EaglercraftRandom var5 = new EaglercraftRandom(8124371L);
 				int var6;
 
-				for(String str : EaglerAdapter.fileContentsLines("/title/win.txt")) {
+				String[] strs = EaglerMisc.bytesToLines(mc.texturePackList.getSelectedTexturePack().getResourceAsBytes("/title/win.txt"));
+				for(String str : strs) {
 					String var7;
 					String var8;
 
@@ -88,7 +90,8 @@ public class GuiWinGame extends GuiScreen {
 					this.lines.add("");
 				}
 
-				for(String str : EaglerAdapter.fileContentsLines("/title/credits.txt")) {
+				strs = EaglerMisc.bytesToLines(mc.texturePackList.getSelectedTexturePack().getResourceAsBytes("/title/credits.txt"));
+				for(String str : strs) {
 					var1 = var1.replaceAll("PLAYERNAME", EaglerProfile.username);
 					var1 = var1.replaceAll("\t", "    ");
 					this.lines.addAll(this.mc.fontRenderer.listFormattedStringToWidth(var1, var3));

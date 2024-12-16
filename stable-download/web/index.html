@@ -40,7 +40,7 @@ var q = window.location.search;
 if(typeof q === 'string' && q.startsWith("?")) {
 	q = new URLSearchParams(q);
 	var s = q.get("server");
-	if(s) window.minecraftOpts.push(s);
+	if(s) window.eaglercraftOpts.joinServer = s;
 }
 })();
 main();

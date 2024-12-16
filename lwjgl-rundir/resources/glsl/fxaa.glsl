@@ -58,7 +58,7 @@ out vec4 fragColor;
     #define FxaaTex sampler2D
 /*--------------------------------------------------------------------------*/
 
-    #define FxaaTexTop(t, p) texture(t, p)
+    #define FxaaTexTop(t, p) textureLod(t, p, 0.0)
 
 /*============================================================================
                    GREEN AS LUMA OPTION SUPPORT FUNCTION
@@ -241,15 +241,15 @@ uniform vec2 screenSize;
 #define edgeThresholdMin 0.005
 
 void main(){
+	vec2 screenSize05 = 0.5 * screenSize;
+
 	vec4 posPos;
-    posPos.xy = pos - (0.6 / screenSize);
-    posPos.zw = pos + (0.6 / screenSize);
-    vec4 rcpFrameOpt;
-    rcpFrameOpt.xy = vec2(-0.50, -0.50) / screenSize;
-    rcpFrameOpt.zw = vec2( 0.50,  0.50) / screenSize;
-    vec4 rcpFrameOpt2;
-    rcpFrameOpt2.xy = vec2(-2.0, -2.0) / screenSize;
-    rcpFrameOpt2.zw = vec2( 2.0,  2.0) / screenSize;
-	
-	fragColor = vec4(FxaaPixelShader(pos, posPos, f_color, rcpFrameOpt, rcpFrameOpt2, edgeSharpness, edgeThreshold, edgeThresholdMin).rgb, 1.0);
+	posPos.xy = pos;
+	posPos.zw = pos + screenSize;
+
+	vec4 rcpFrameOpt;
+	rcpFrameOpt.xy = -screenSize05;
+	rcpFrameOpt.zw = screenSize05;
+
+	fragColor = vec4(FxaaPixelShader(pos + screenSize05, posPos, f_color, rcpFrameOpt, rcpFrameOpt * 4.0, edgeSharpness, edgeThreshold, edgeThresholdMin).rgb, 1.0);
 }

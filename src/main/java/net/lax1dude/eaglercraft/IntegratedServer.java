@@ -27,7 +27,7 @@ public class IntegratedServer {
 	private static String[] loadLocale = null;
 	private static String[] loadStats = null;
 	private static boolean isPaused = false;
-	private static List<String> integratedServerTPS = new LinkedList();
+	private static List<String> integratedServerTPS = new LinkedList<>();
 	
 	public static final int preferredRelayVersion = 1;
 	
@@ -187,9 +187,9 @@ public class IntegratedServer {
 	private static String worldStatusString = "";
 	private static float worldStatusProgress = 0.0f;
 
-	private static final LinkedList<IPCPacket15ThrowException> exceptions = new LinkedList();
+	private static final LinkedList<IPCPacket15ThrowException> exceptions = new LinkedList<>();
 	
-	public static final LinkedList<NBTTagCompound> worlds = new LinkedList();
+	public static final LinkedList<NBTTagCompound> worlds = new LinkedList<>();
 	
 	public static int statusState() {
 		return statusState;
@@ -408,7 +408,7 @@ public class IntegratedServer {
 		}
 	}
 	
-	private static final HashMap<String, WorkerNetworkManager> openConnections = new HashMap();
+	private static final HashMap<String, WorkerNetworkManager> openConnections = new HashMap<>();
 	
 	public static final boolean doesChannelExist(String channel) {
 		return openConnections.containsKey(channel);

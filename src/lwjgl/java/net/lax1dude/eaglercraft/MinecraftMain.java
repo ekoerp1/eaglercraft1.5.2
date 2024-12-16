@@ -1,5 +1,7 @@
 package net.lax1dude.eaglercraft;
 
+import java.lang.management.ManagementFactory;
+
 import javax.swing.JOptionPane;
 
 import net.minecraft.client.Minecraft;
@@ -9,7 +11,7 @@ public class MinecraftMain {
 
 	public static void main(String[] par0ArrayOfStr) {
 		
-		JOptionPane.showMessageDialog(null, "launch renderdoc (optionally) and press ok to continue", "eaglercraft", JOptionPane.PLAIN_MESSAGE);
+		JOptionPane.showMessageDialog(null, "launch renderdoc (optionally) and press ok to continue", "eaglercraft: " + ManagementFactory.getRuntimeMXBean().getName(), JOptionPane.PLAIN_MESSAGE);
 		
 		EaglerAdapter.initializeContext();
 		LocalStorageManager.loadStorage();

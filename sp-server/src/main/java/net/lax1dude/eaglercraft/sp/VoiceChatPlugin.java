@@ -26,7 +26,7 @@ public class VoiceChatPlugin {
 	private static final Map<String, ExpiringSet<String>> voiceRequests = new HashMap<>();
 	private static final Set<String[]> voicePairs = new HashSet<>();
 	
-	private static final List<String> iceServers = new ArrayList();
+	private static final List<String> iceServers = new ArrayList<>();
 
 	private static final int VOICE_SIGNAL_ALLOWED = 0;
 	private static final int VOICE_SIGNAL_REQUEST = 0;

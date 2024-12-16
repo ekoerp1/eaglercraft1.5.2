@@ -156,8 +156,6 @@ public class RenderGlobal implements IWorldAccess {
 		for(int i = 0; i < glOcclusionQuery.length; ++i) {
 			this.glOcclusionQuery[i] = -1;
 		}
-		this.occlusionQueryAvailable = new boolean[glOcclusionQuery.length];
-		this.occlusionQueryStalled = new long[occlusionQueryAvailable.length];
 		this.starGLCallList = GLAllocation.generateDisplayLists(3);
 		EaglerAdapter.glPushMatrix();
 		EaglerAdapter.glNewList(this.starGLCallList, EaglerAdapter.GL_COMPILE);
@@ -321,8 +319,7 @@ public class RenderGlobal implements IWorldAccess {
 						int i = (var6 * this.renderChunksTall + var5) * this.renderChunksWide + var4;
 						this.worldRenderers[i] = new WorldRenderer(this.theWorld, this.tileEntities, var4 * 16, var5 * 16, var6 * 16, this.glRenderListBase + var2);
 						this.worldRenderers[i].isWaitingOnOcclusionQuery = false;
-						this.worldRenderers[i].isNowVisible = true;
-						this.worldRenderers[i].isVisible = 100;
+						this.worldRenderers[i].isVisible = true;
 						this.worldRenderers[i].isInFrustum = true;
 						this.worldRenderers[i].chunkIndex = var3++;
 						this.worldRenderers[i].markDirty();
@@ -354,7 +351,6 @@ public class RenderGlobal implements IWorldAccess {
 		if (this.renderEntitiesStartupCounter > 0) {
 			--this.renderEntitiesStartupCounter;
 		} else {
-			this.theWorld.theProfiler.startSection("prepare");
 			TileEntityRenderer.instance.cacheActiveRenderInfo(this.theWorld, this.renderEngine, this.mc.fontRenderer, this.mc.renderViewEntity, par3);
 			RenderManager.instance.cacheActiveRenderInfo(this.theWorld, this.renderEngine, this.mc.fontRenderer, this.mc.renderViewEntity, this.mc.pointedEntityLiving, this.mc.gameSettings, par3);
 			this.countEntitiesTotal = 0;
@@ -368,7 +364,6 @@ public class RenderGlobal implements IWorldAccess {
 			TileEntityRenderer.staticPlayerY = var4.lastTickPosY + (var4.posY - var4.lastTickPosY) * (double) par3;
 			TileEntityRenderer.staticPlayerZ = var4.lastTickPosZ + (var4.posZ - var4.lastTickPosZ) * (double) par3;
 			this.mc.entityRenderer.enableLightmap((double) par3);
-			this.theWorld.theProfiler.endStartSection("global");
 			List var5 = this.theWorld.getLoadedEntityList();
 			this.countEntitiesTotal = var5.size();
 			int var6;
@@ -383,8 +378,6 @@ public class RenderGlobal implements IWorldAccess {
 				}
 			}
 
-			this.theWorld.theProfiler.endStartSection("entities");
-
 			for (var6 = 0; var6 < var5.size(); ++var6) {
 				var7 = (Entity) var5.get(var6);
 
@@ -396,7 +389,6 @@ public class RenderGlobal implements IWorldAccess {
 				}
 			}
 
-			this.theWorld.theProfiler.endStartSection("tileentities");
 			RenderHelper.enableStandardItemLighting();
 
 			for (var6 = 0; var6 < this.tileEntities.size(); ++var6) {
@@ -404,7 +396,6 @@ public class RenderGlobal implements IWorldAccess {
 			}
 
 			this.mc.entityRenderer.disableLightmap((double) par3);
-			this.theWorld.theProfiler.endSection();
 		}
 	}
 
@@ -505,19 +496,13 @@ public class RenderGlobal implements IWorldAccess {
 		}
 	}
 
-	// GOSH FUCKING DAMMIT WHY IN THE FUCK IS GODDAMN WEBGL THIS UNSTABLE
-	
 	private long lastOcclusionQuery = 0l;
-	private boolean[] occlusionQueryAvailable;
-	private long[] occlusionQueryStalled;
 
 	/**
 	 * Sorts all renderers based on the passed in entity. Args: entityLiving,
 	 * renderPass, partialTickTime
 	 */
 	public int sortAndRender(EntityLiving par1EntityLiving, int par2, double par3) {
-		this.theWorld.theProfiler.startSection("sortchunks");
-
 		for (int var5 = 0; var5 < 10; ++var5) {
 			this.worldRenderersCheckIndex = (this.worldRenderersCheckIndex + 1) % this.worldRenderers.length;
 			WorldRenderer var6 = this.worldRenderers[this.worldRenderersCheckIndex];
@@ -568,59 +553,32 @@ public class RenderGlobal implements IWorldAccess {
 		int var34;
 
 		long queryRate = 50l;
-		long stallRateVisible = 60l;
-		long stallRate = 500l;
-		int cooldownRate = 13;
 
-		long ct = System.currentTimeMillis();
+		long ct = EaglerAdapter.steadyTimeMillis();
 		if(par2 == 0) {
-			this.theWorld.theProfiler.endStartSection("getoccl");
 			for (int i = 0; i < this.sortedWorldRenderers.length; ++i) {
 				WorldRenderer c = this.sortedWorldRenderers[i];
 				int ccx = c.chunkX - fx;
 				int ccy = c.chunkY - fy;
 				int ccz = c.chunkZ - fz;
 				boolean forced = ccx < 2 && ccx > -2 && ccy < 2 && ccy > -2 && ccz < 2 && ccz > -2;
-				if(forced) {
-					c.hasOcclusionData = 5;
-				}
-				if(forced || glOcclusionQuery[c.chunkIndex] == -1) {
-					c.isNowVisible = true;
-					c.isVisible = cooldownRate;
-				}else if(occlusionQueryAvailable[c.chunkIndex]) {
-					if(EaglerAdapter.glGetQueryResultAvailable(glOcclusionQuery[c.chunkIndex])) {
-						if(EaglerAdapter.glGetQueryResult(glOcclusionQuery[c.chunkIndex])) {
-							c.isNowVisible = true;
-							++c.hasOcclusionData;
-							if(c.hasOcclusionData > 5) {
-								c.hasOcclusionData = 5;
-							}
-							c.isVisible = cooldownRate;
-						}else {
-							if(c.isVisible <= 0) {
-								c.isNowVisible = false;
-								--c.hasOcclusionData;
-								if(c.hasOcclusionData < 0) {
-									c.hasOcclusionData = 0;
-								}
-							}
-						}
-						occlusionQueryAvailable[c.chunkIndex] = false;
-						occlusionQueryStalled[c.chunkIndex] = 0l;
-					}else if(occlusionQueryStalled[c.chunkIndex] != 0l && ct - occlusionQueryStalled[c.chunkIndex] > stallRateVisible) {
-						c.isNowVisible = true;
-						c.isVisible = cooldownRate;
+				if(forced || c.chunkIndex == -1) {
+					c.isVisible = true;
+				}else if(c.isWaitingOnOcclusionQuery) {
+					int j = glOcclusionQuery[c.chunkIndex];
+					if(EaglerAdapter.glGetQueryResultAvailable(j)) {
+						c.isVisible = EaglerAdapter.glGetQueryResult(j);
+						c.isWaitingOnOcclusionQuery = false;
 					}
 				}
 			}
 		}
 		
-		this.theWorld.theProfiler.endStartSection("render");
 		var34 = var17 + this.renderSortedRenderers(0, this.sortedWorldRenderers.length, par2, par3);
 		
 		var7 -= par1EntityLiving.getEyeHeight();
 		
-		ct = System.currentTimeMillis();
+		ct = EaglerAdapter.steadyTimeMillis();
 		if(par2 == 0 && ct - lastOcclusionQuery > queryRate) {
 			
 			int totalRenderers = this.sortedWorldRenderers.length;
@@ -644,7 +602,6 @@ public class RenderGlobal implements IWorldAccess {
 			
 			inFrustumCount = 0;
 			lastOcclusionQuery = ct;
-			this.theWorld.theProfiler.endStartSection("occl");
 			EaglerAdapter.glEnable(EaglerAdapter.GL_CULL_FACE);
 			EaglerAdapter.glDisable(EaglerAdapter.GL_BLEND);
 			EaglerAdapter.glColorMask(false, false, false, false);
@@ -663,17 +620,8 @@ public class RenderGlobal implements IWorldAccess {
 					}
 				}
 				if(shouldTry && !(ccx < 2 && ccx > -2 && ccy < 2 && ccy > -2 && ccz < 2 && ccz > -2)) {
-					boolean stalled = false;
-					if(occlusionQueryAvailable[c.chunkIndex]) {
-						if(occlusionQueryStalled[c.chunkIndex] == 0l) {
-							occlusionQueryStalled[c.chunkIndex] = ct;
-							stalled = true;
-						}else if(ct - occlusionQueryStalled[c.chunkIndex] < stallRate) {
-							stalled = true;
-						}
-					}
-					if(!stalled) {
-						occlusionQueryAvailable[c.chunkIndex] = true;
+					if(!c.isWaitingOnOcclusionQuery) {
+						c.isWaitingOnOcclusionQuery = true;
 						int q = glOcclusionQuery[c.chunkIndex];
 						if(q == -1) {
 							q = glOcclusionQuery[c.chunkIndex] = EaglerAdapter.glCreateQuery();
@@ -682,14 +630,6 @@ public class RenderGlobal implements IWorldAccess {
 						EaglerAdapter.glDrawOcclusionBB((float)(c.posX - var33), (float)(c.posY - var7), (float)(c.posZ - var9), 16, 16, 16);
 						EaglerAdapter.glEndQuery();
 					}
-				}else {
-					--c.hasOcclusionData;
-					if(c.hasOcclusionData < 0) {
-						c.hasOcclusionData = 0;
-					}
-				}
-				if(c.isVisible > 0) {
-					--c.isVisible;
 				}
 			}
 			EaglerAdapter.glEndOcclusionBB();
@@ -698,7 +638,6 @@ public class RenderGlobal implements IWorldAccess {
 			EaglerAdapter.glEnable(EaglerAdapter.GL_CULL_FACE);
 		}
 
-		this.theWorld.theProfiler.endSection();
 		return var34;
 	}
 
@@ -718,14 +657,14 @@ public class RenderGlobal implements IWorldAccess {
 					++this.renderersSkippingRenderPass;
 				} else if (!this.sortedWorldRenderers[var7].isInFrustum) {
 					++this.renderersBeingClipped;
-				} else if(!this.sortedWorldRenderers[var7].isNowVisible) {
+				} else if(!this.sortedWorldRenderers[var7].isVisible) {
 					++this.renderersBeingOccluded;
 				} else {
 					++this.renderersBeingRendered;
 				}
 			}
 
-			if (!this.sortedWorldRenderers[var7].skipRenderPass[par3] && this.sortedWorldRenderers[var7].isInFrustum && this.sortedWorldRenderers[var7].isNowVisible) {
+			if (!this.sortedWorldRenderers[var7].skipRenderPass[par3] && this.sortedWorldRenderers[var7].isInFrustum && this.sortedWorldRenderers[var7].isVisible) {
 				int var8 = this.sortedWorldRenderers[var7].getGLCallListForPass(par3);
 
 				if (var8 >= 0) {
@@ -917,7 +856,7 @@ public class RenderGlobal implements IWorldAccess {
 					var13 = (float) var27 * (float) Math.PI * 2.0F / (float) var26;
 					float var14 = MathHelper.sin(var13);
 					float var15 = MathHelper.cos(var13);
-					var23.addVertex((double) (var14 * 120.0F), (double) (var15 * 120.0F), (double) (-var15 * 40.0F * var24[3]));
+					var23.addVertex((double) (var14 * 120.0F), (double) (var15 * 120.0F), (double) (var15 * 40.0F * var24[3]));
 				}
 
 				var23.draw();
@@ -1267,7 +1206,6 @@ public class RenderGlobal implements IWorldAccess {
 		ArrayList var6 = null;
 		int var7 = this.worldRenderersToUpdate.size();
 		int var8 = 0;
-		this.theWorld.theProfiler.startSection("nearChunksSearch");
 		int var9;
 		WorldRenderer var10;
 		int var11;
@@ -1277,7 +1215,7 @@ public class RenderGlobal implements IWorldAccess {
 			var10 = (WorldRenderer) this.worldRenderersToUpdate.get(var9);
 
 			if (var10 != null) {
-				if (!var10.isInFrustum || !var10.isNowVisible || var10.hasOcclusionData < 3) { // config?
+				if (!var10.isInFrustum || !var10.isVisible) {
 					laterUpdateList.add(var10);
 				}else {
 					if (var6 == null) {
@@ -1291,9 +1229,6 @@ public class RenderGlobal implements IWorldAccess {
 		}
 		
 		this.worldRenderersToUpdate = laterUpdateList;
-
-		this.theWorld.theProfiler.endSection();
-		this.theWorld.theProfiler.startSection("sortAndUpdate");
 
 		int updates = 0;
 		int dropped = 0;
@@ -1319,8 +1254,6 @@ public class RenderGlobal implements IWorldAccess {
 			}
 		}
 
-		this.theWorld.theProfiler.endSection();
-		
 		return true;
 	}
 	

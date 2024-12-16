@@ -4,10 +4,10 @@ import static net.lax1dude.eaglercraft.adapter.teavm.WebGL2RenderingContext.*;
 
 import org.teavm.jso.browser.Window;
 import org.teavm.jso.dom.html.HTMLCanvasElement;
-import org.teavm.jso.typedarrays.Float32Array;
 import org.teavm.jso.typedarrays.Uint8Array;
 
 import net.lax1dude.eaglercraft.Client;
+import net.lax1dude.eaglercraft.adapter.teavm.TeaVMUtils;
 import net.lax1dude.eaglercraft.adapter.teavm.WebGL2RenderingContext;
 import net.lax1dude.eaglercraft.adapter.teavm.WebGLVertexArray;
 
@@ -127,9 +127,6 @@ public class DetectAnisotropicGlitch {
 					x0, x0, x0, x1
 			};
 			
-			Uint8Array pixels = Uint8Array.create(pixelsData.length);
-			pixels.set(pixelsData);
-			
 			WebGLTexture tex = ctx.createTexture();
 			
 			ctx.bindTexture(TEXTURE_2D, tex);
@@ -140,7 +137,7 @@ public class DetectAnisotropicGlitch {
 			ctx.texParameteri(TEXTURE_2D, TEXTURE_MAG_FILTER, NEAREST);
 			ctx.texParameterf(TEXTURE_2D, TEXTURE_MAX_ANISOTROPY_EXT, 16.0f);
 			
-			ctx.texImage2D(TEXTURE_2D, 0, RGBA, 4, 3, 0, RGBA, UNSIGNED_BYTE, pixels);
+			ctx.texImage2D(TEXTURE_2D, 0, RGBA, 4, 3, 0, RGBA, UNSIGNED_BYTE, TeaVMUtils.unwrapUnsignedByteArray(pixelsData));
 			ctx.generateMipmap(TEXTURE_2D);
 			
 			float[] vertsData = new float[] {
@@ -152,13 +149,10 @@ public class DetectAnisotropicGlitch {
 					0.0f, 1.0f
 			};
 			
-			Float32Array verts = Float32Array.create(vertsData.length);
-			verts.set(vertsData);
-			
 			WebGLBuffer buf = ctx.createBuffer();
 			
 			ctx.bindBuffer(ARRAY_BUFFER, buf);
-			ctx.bufferData(ARRAY_BUFFER, verts, STATIC_DRAW);
+			ctx.bufferData(ARRAY_BUFFER, TeaVMUtils.unwrapFloatArray(vertsData), STATIC_DRAW);
 			
 			WebGLVertexArray arr = ctx.createVertexArray();
 			
@@ -175,7 +169,7 @@ public class DetectAnisotropicGlitch {
 			ctx.deleteTexture(tex);
 			ctx.deleteProgram(pr);
 			
-			Uint8Array readPx = Uint8Array.create(4);
+			Uint8Array readPx = new Uint8Array(4);
 			ctx.readPixels(175, 150, 1, 1, RGBA, UNSIGNED_BYTE, readPx);
 			
 			boolean b = (readPx.get(0) + readPx.get(1) + readPx.get(2)) != 0;

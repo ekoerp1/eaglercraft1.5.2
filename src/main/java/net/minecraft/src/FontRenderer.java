@@ -9,6 +9,7 @@ import net.lax1dude.eaglercraft.EaglerImage;
 import net.lax1dude.eaglercraft.EaglercraftRandom;
 import net.lax1dude.eaglercraft.TextureLocation;
 import net.lax1dude.eaglercraft.adapter.Tessellator;
+import net.minecraft.client.Minecraft;
 
 public class FontRenderer {
 	/** Array of width of all the characters in default.png */
@@ -131,7 +132,7 @@ public class FontRenderer {
 
 	private void readFontTexture(String par1Str) {
 		//EaglerImage e = EaglerImage.loadImage(EaglerAdapter.loadResourceBytes(par1Str));
-		EaglerImage e = EaglerAdapter.loadPNG(EaglerAdapter.loadResourceBytes(par1Str));
+		EaglerImage e = EaglerAdapter.loadPNG(Minecraft.getMinecraft().texturePackList.getSelectedTexturePack().getResourceAsBytes(par1Str));
 		int[] var5 = e.data;
 		int var3 = e.w;
 		int var4 = e.h;
@@ -174,7 +175,7 @@ public class FontRenderer {
 	}
 
 	private void readGlyphSizes() {
-		this.glyphWidth = EaglerAdapter.loadResourceBytes("/font/glyph_sizes.bin");
+		this.glyphWidth = Minecraft.getMinecraft().texturePackList.getSelectedTexturePack().getResourceAsBytes("/font/glyph_sizes.bin");
 	}
 
 	/**

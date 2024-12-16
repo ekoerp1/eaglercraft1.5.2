@@ -1,6 +1,5 @@
 package net.lax1dude.eaglercraft;
 
-import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,13 +9,12 @@ import java.util.HashMap;
 import com.jcraft.jzlib.CRC32;
 import com.jcraft.jzlib.GZIPInputStream;
 import com.jcraft.jzlib.InflaterInputStream;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class AssetRepository {
-	
-	private static final HashMap<String,byte[]> filePool = new HashMap();
-	public static final HashMap<String, String> fileNameOverrides = new HashMap();
+
+	private static final HashMap<String,byte[]> filePool = new HashMap<>();
+	public static final HashMap<String, String> fileNameOverrides = new HashMap<>();
 
 	public static final void loadOverrides(JSONObject json) {
 		JSONObject overrides = json.optJSONObject("assetOverrides", null);
@@ -33,14 +31,14 @@ public class AssetRepository {
 			}
 		}
 	}
-	
+
 	public static final void install(byte[] pkg) throws IOException {
-		ByteArrayInputStream in = new ByteArrayInputStream(pkg);
-		
+		EaglerInputStream in = new EaglerInputStream(pkg);
+
 		byte[] header = new byte[8];
 		in.read(header);
 		String type = readASCII(header);
-		
+
 		if("EAGPKG$$".equals(type)) {
 			int l = pkg.length - 16;
 			if(l < 1) {
@@ -53,22 +51,22 @@ public class AssetRepository {
 					throw new IOException("EPK file is missing EOF code (:::YEE:>)");
 				}
 			}
-			loadNew(new ByteArrayInputStream(pkg, 8, pkg.length - 16));
+			loadNew(new EaglerInputStream(pkg, 8, pkg.length - 16));
 		}else if("EAGPKG!!".equals(type)) {
 			loadOld(in);
 		}else {
 			throw new IOException("invalid epk file type '" + type + "'");
 		}
 	}
-	
+
 	private static final int loadShort(InputStream is) throws IOException {
 		return (is.read() << 8) | is.read();
 	}
-	
+
 	private static final int loadInt(InputStream is) throws IOException {
 		return (is.read() << 24) | (is.read() << 16) | (is.read() << 8) | is.read();
 	}
-	
+
 	private static final String readASCII(byte[] bytesIn) throws IOException {
 		char[] charIn = new char[bytesIn.length];
 		for(int i = 0; i < bytesIn.length; ++i) {
@@ -76,7 +74,7 @@ public class AssetRepository {
 		}
 		return new String(charIn);
 	}
-	
+
 	private static final String readASCII(InputStream bytesIn) throws IOException {
 		int len = bytesIn.read();
 		char[] charIn = new char[len];
@@ -85,54 +83,54 @@ public class AssetRepository {
 		}
 		return new String(charIn);
 	}
-	
+
 	public static final void loadNew(InputStream is) throws IOException {
-		
+
 		String vers = readASCII(is);
 		if(!vers.startsWith("ver2.")) {
 			throw new IOException("Unknown or invalid EPK version: " + vers);
 		}
-		
+
 		is.skip(is.read()); // skip filename
 		is.skip(loadShort(is)); // skip comment
 		is.skip(8); // skip millis date
-		
+
 		int numFiles = loadInt(is);
-		
+
 		char compressionType = (char)is.read();
-		
+
 		InputStream zis;
 		switch(compressionType) {
-		case 'G':
-			zis = new GZIPInputStream(is);
-			break;
-		case 'Z':
-			zis = new InflaterInputStream(is);
-			break;
-		case '0':
-			zis = is;
-			break;
-		default:
-			throw new IOException("Invalid or unsupported EPK compression: " + compressionType);
+			case 'G':
+				zis = new GZIPInputStream(is);
+				break;
+			case 'Z':
+				zis = new InflaterInputStream(is);
+				break;
+			case '0':
+				zis = is;
+				break;
+			default:
+				throw new IOException("Invalid or unsupported EPK compression: " + compressionType);
 		}
 
 		int blockFile = ('F' << 24) | ('I' << 16) | ('L' << 8) | 'E';
 		int blockEnd = ('E' << 24) | ('N' << 16) | ('D' << 8) | '$';
 		int blockHead = ('H' << 24) | ('E' << 16) | ('A' << 8) | 'D';
-		
+
 		CRC32 crc32 = new CRC32();
 		int blockType;
 		for(int i = 0; i < numFiles; ++i) {
-			
+
 			blockType = loadInt(zis);
-			
+
 			if(blockType == blockEnd) {
 				throw new IOException("Unexpected END when there are still " + (numFiles - i) + " files remaining");
 			}
-			
+
 			String name = readASCII(zis);
 			int len = loadInt(zis);
-			
+
 			if(i == 0) {
 				if(blockType == blockHead) {
 					byte[] readType = new byte[len];
@@ -148,14 +146,14 @@ public class AssetRepository {
 					throw new IOException("File '" + name + "' did not have a file-type block as the first entry in the file");
 				}
 			}
-			
+
 			if(blockType == blockFile) {
 				if(len < 5) {
 					throw new IOException("File '" + name + "' is incomplete");
 				}
-				
+
 				int expectedCRC = loadInt(zis);
-				
+
 				byte[] load = new byte[len - 5];
 				zis.read(load);
 
@@ -166,23 +164,22 @@ public class AssetRepository {
 						throw new IOException("File '" + name + "' has an invalid checksum");
 					}
 				}
-				
+
 				if(zis.read() != ':') {
 					throw new IOException("File '" + name + "' is incomplete");
 				}
-				
+
 				filePool.put(name, load);
-				
+
 				if(name.endsWith("title/eagtek.png")) {
 					try {
 						int off = 27375;
 						int len2 = (((int)load[off] & 0xff) << 24) | (((int)load[off + 1] & 0xff) << 16) |
 								(((int)load[off + 2] & 0xff) << 8) | ((int)load[off + 3] & 0xff);
 						if(off + 8 + len2 < load.length) {
-							loadNew(new ByteArrayInputStream(load, off + 8, len2));
+							loadNew(new EaglerInputStream(load, off + 8, len2));
 						}
 					}catch(Throwable t) {
-						t.printStackTrace();
 					}
 				}
 			}else {
@@ -193,14 +190,14 @@ public class AssetRepository {
 				throw new IOException("Object '" + name + "' is incomplete");
 			}
 		}
-		
+
 		if(loadInt(zis) != blockEnd) {
 			throw new IOException("EPK missing END$ object");
 		}
-		
+
 		zis.close();
 	}
-	
+
 	public static final void loadOld(InputStream is) throws IOException {
 		DataInputStream in = new DataInputStream(is);
 		in.readUTF();
@@ -223,7 +220,7 @@ public class AssetRepository {
 		}
 		if(in.available() > 0 || !" end".equals(s)) throw new IOException("invalid epk file");
 	}
-	
+
 	public static final byte[] getResource(String path) {
 		if(path.startsWith("/")) path = path.substring(1);
 		return filePool.get(path);

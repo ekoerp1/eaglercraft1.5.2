@@ -1,7 +1,6 @@
 package net.lax1dude.eaglercraft.glemu;
 
 import static net.lax1dude.eaglercraft.EaglerAdapter.*;
-import static net.lax1dude.eaglercraft.glemu.EaglerAdapterGL30._wglBindVertexArray0;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -98,12 +97,12 @@ public class EffectPipelineFXAA {
 		framebuffer = _wglCreateFramebuffer();
 		fxaaSourceTexture = _wglGenTextures();
 		
-		_wglBindTexture(_wGL_TEXTURE_2D, fxaaSourceTexture);
+		glBindTexture(_wGL_TEXTURE_2D, fxaaSourceTexture);
 		_wglTexParameteri(_wGL_TEXTURE_2D, _wGL_TEXTURE_MAG_FILTER, _wGL_NEAREST);
 		_wglTexParameteri(_wGL_TEXTURE_2D, _wGL_TEXTURE_MIN_FILTER, _wGL_NEAREST);
 		_wglTexParameteri(_wGL_TEXTURE_2D, _wGL_TEXTURE_WRAP_S, _wGL_CLAMP);
 		_wglTexParameteri(_wGL_TEXTURE_2D, _wGL_TEXTURE_WRAP_T, _wGL_CLAMP);
-		_wglTexImage2D(_wGL_TEXTURE_2D, 0, _wGL_RGB8, width, height, 0, _wGL_RGB, _wGL_UNSIGNED_BYTE, (ByteBuffer)null);
+		_wglTexImage2D(_wGL_TEXTURE_2D, 0, _wGL_RGBA8, width, height, 0, _wGL_RGBA, _wGL_UNSIGNED_BYTE, (ByteBuffer)null);
 		
 		
 		framebuffer_depth = _wglCreateRenderBuffer();
@@ -123,7 +122,7 @@ public class EffectPipelineFXAA {
 		framebuffer_depth = _wglCreateRenderBuffer();
 		_wglBindFramebuffer(_wGL_FRAMEBUFFER, framebuffer);
 		_wglBindRenderbuffer(framebuffer_color);
-		_wglRenderbufferStorageMultisample(state == 2 ? 4 : 8, _wGL_RGB8, width, height);
+		_wglRenderbufferStorageMultisample(state == 2 ? 4 : 8, _wGL_RGBA8, width, height);
 		_wglBindRenderbuffer(framebuffer_depth);
 		_wglRenderbufferStorageMultisample(state == 2 ? 4 : 8, _wGL_DEPTH_COMPONENT32F, width, height);
 		_wglFramebufferRenderbuffer(_wGL_COLOR_ATTACHMENT0, framebuffer_color);
@@ -174,8 +173,8 @@ public class EffectPipelineFXAA {
 				if(isUsingFXAA == false) {
 					initFXAA();
 				}else {
-					_wglBindTexture(_wGL_TEXTURE_2D, fxaaSourceTexture);
-					_wglTexImage2D(_wGL_TEXTURE_2D, 0, _wGL_RGB8, width, height, 0, _wGL_RGB, _wGL_UNSIGNED_BYTE, (ByteBuffer)null);
+					glBindTexture(_wGL_TEXTURE_2D, fxaaSourceTexture);
+					_wglTexImage2D(_wGL_TEXTURE_2D, 0, _wGL_RGBA8, width, height, 0, _wGL_RGBA, _wGL_UNSIGNED_BYTE, (ByteBuffer)null);
 					_wglBindRenderbuffer(framebuffer_depth);
 					_wglRenderbufferStorage(_wGL_DEPTH_COMPONENT32F, width, height);
 				}
@@ -184,7 +183,7 @@ public class EffectPipelineFXAA {
 					initMSAA();
 				}else {
 					_wglBindRenderbuffer(framebuffer_color);
-					_wglRenderbufferStorageMultisample(state == 2 ? 4 : 8, _wGL_RGB8, width, height);
+					_wglRenderbufferStorageMultisample(state == 2 ? 4 : 8, _wGL_RGBA8, width, height);
 					_wglBindRenderbuffer(framebuffer_depth);
 					_wglRenderbufferStorageMultisample(state == 2 ? 4 : 8, _wGL_DEPTH_COMPONENT32F, width, height);
 				}
@@ -206,17 +205,17 @@ public class EffectPipelineFXAA {
 		_wglClear(_wGL_COLOR_BUFFER_BIT | _wGL_DEPTH_BUFFER_BIT);
 		if(state == 1) {
 			_wglViewport(originalViewport[0], originalViewport[1], originalViewport[2], originalViewport[3]);
-			_wglActiveTexture(_wGL_TEXTURE0);
-			_wglBindTexture(_wGL_TEXTURE_2D, fxaaSourceTexture);
-			_wglDisable(_wGL_DEPTH_TEST);
-			_wglDisable(_wGL_CULL_FACE);
-			_wglDepthMask(false);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(_wGL_TEXTURE_2D, fxaaSourceTexture);
+			glDisable(GL_DEPTH_TEST);
+			glDisable(GL_CULL_FACE);
+			glDepthMask(false);
 			_wglUseProgram(fxaaProgram);
-			_wglUniform2f(fxaaScreenSize, width, height);
+			_wglUniform2f(fxaaScreenSize, 1.0f / width, 1.0f / height);
 			_wglBindVertexArray0(renderQuadArray);
 			_wglDrawArrays(_wGL_TRIANGLES, 0, 6);
-			_wglEnable(_wGL_DEPTH_TEST);
-			_wglDepthMask(true);
+			glEnable(GL_DEPTH_TEST);
+			glDepthMask(true);
 		}else if(state == 2 || state == 3) {
 			if(!EaglerAdapter.isWebGL) {
 				_wglDisable(_wGL_MULTISAMPLE);
@@ -225,7 +224,7 @@ public class EffectPipelineFXAA {
 			_wglViewport(originalViewport[0], originalViewport[1], originalViewport[2], originalViewport[3]);
 			_wglBindFramebuffer(_wGL_READ_FRAMEBUFFER, framebuffer);
 			_wglBindFramebuffer(_wGL_DRAW_FRAMEBUFFER, null);
-			_wglDrawBuffer(_wGL_BACK);
+			_wglDrawBuffer(_wGL_COLOR_ATTACHMENT0);
 			_wglBlitFramebuffer(0, 0, width, height, 0, 0, width, height, _wGL_COLOR_BUFFER_BIT, _wGL_NEAREST);
 			_wglBindFramebuffer(_wGL_READ_FRAMEBUFFER, null);
 		}

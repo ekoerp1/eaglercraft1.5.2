@@ -28,7 +28,7 @@ public class SelfDefence {
 	@JSBody(params = { "cb" }, script = "const ccb = cb; const _open = window.open; window.open = (url,name,params) => { var rw = _open(url,name,params); ccb(rw); return rw; }")
 	private static native void injectWindowCapture(NewWindowCallback callback);
 	
-	private static final List<Window> capturedChildWindows = new ArrayList();
+	private static final List<Window> capturedChildWindows = new ArrayList<>();
 	
 	public static void init(HTMLCanvasElement legitCanvas) {
 		canvas = legitCanvas;

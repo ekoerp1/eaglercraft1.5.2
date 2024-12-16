@@ -182,7 +182,7 @@ public class VIteratorFile extends VFile {
 			throw new ArrayIndexOutOfBoundsException("Value of the fucking value of the entry is missing");
 		}
 		
-		Uint8Array a = Uint8Array.create(arr);
+		Uint8Array a = new Uint8Array(arr);
 		
 		if(a.getLength() < fileOffset + length) {
 			throw new ArrayIndexOutOfBoundsException("file '" + path + "' size was "+a.getLength()+" but user tried to read index "+(fileOffset + length - 1));
@@ -213,7 +213,7 @@ public class VIteratorFile extends VFile {
 			return null;
 		}
 		
-		Uint8Array a = Uint8Array.create(arr);
+		Uint8Array a = new Uint8Array(arr);
 		int ii = a.getByteLength();
 		
 		byte[] array = new byte[ii];
@@ -252,8 +252,8 @@ public class VIteratorFile extends VFile {
 	private static native JSObject writeRow(String name, ArrayBuffer data);
 	
 	public boolean setAllBytes(byte[] bytes) {
-		ArrayBuffer a = ArrayBuffer.create(bytes.length);
-		Uint8Array ar = Uint8Array.create(a);
+		ArrayBuffer a = new ArrayBuffer(bytes.length);
+		Uint8Array ar = new Uint8Array(a);
 		ar.set(bytes);
 		JSObject obj = writeRow(path, a);
 		BooleanResult r = AsyncHandlers.awaitRequest(cur.update(obj));

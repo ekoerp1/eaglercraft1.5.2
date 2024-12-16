@@ -1,27 +1,19 @@
 package net.lax1dude.eaglercraft.sp;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.teavm.jso.JSBody;
 import org.teavm.jso.JSFunctor;
 import org.teavm.jso.JSObject;
 import org.teavm.jso.typedarrays.ArrayBuffer;
-import org.teavm.jso.typedarrays.Uint8Array;
 
 import net.lax1dude.eaglercraft.sp.ipc.*;
 import net.minecraft.src.AchievementList;
 import net.minecraft.src.AchievementMap;
-import net.minecraft.src.ChunkCoordIntPair;
 import net.minecraft.src.CompressedStreamTools;
 import net.minecraft.src.EnumGameType;
 import net.minecraft.src.ILogAgent;
@@ -32,7 +24,7 @@ import net.minecraft.src.WorldType;
 
 public class IntegratedServer {
 	
-	private static final LinkedList<PKT> messageQueue = new LinkedList();
+	private static final LinkedList<PKT> messageQueue = new LinkedList<>();
 	
 	protected static class PKT {
 		protected final String channel;
@@ -70,14 +62,8 @@ public class IntegratedServer {
 				return;
 			}
 			
-			Uint8Array a = Uint8Array.create(buf);
-			byte[] pkt = new byte[a.getLength()];
-			for(int i = 0; i < pkt.length; ++i) {
-				pkt[i] = (byte) a.get(i);
-			}
-			
 			synchronized(messageQueue) {
-				messageQueue.add(new PKT(channel, pkt));
+				messageQueue.add(new PKT(channel, TeaVMUtils.wrapByteArrayBuffer(buf)));
 			}
 		}
 		
@@ -107,7 +93,7 @@ public class IntegratedServer {
 		String str = t.toString();
 		System.err.println("Exception was raised to client: " + str);
 		t.printStackTrace();
-		List<String> arr = new LinkedList();
+		List<String> arr = new LinkedList<>();
 		for(StackTraceElement e : t.getStackTrace()) {
 			String st = e.toString();
 			arr.add(st);
@@ -220,7 +206,7 @@ public class IntegratedServer {
 							}
 							String[] worldsTxt = SYS.VFS.getFile("worlds.txt").getAllLines();
 							if(worldsTxt != null) {
-								LinkedList<String> newWorlds = new LinkedList();
+								LinkedList<String> newWorlds = new LinkedList<>();
 								for(String str : worldsTxt) {
 									if(!str.equalsIgnoreCase(pkt.worldName)) {
 										newWorlds.add(str);
@@ -240,7 +226,7 @@ public class IntegratedServer {
 								break;
 							}else {
 								String[] worldsTxt = SYS.VFS.getFile("worlds.txt").getAllLines();
-								LinkedList<String> newWorlds = new LinkedList();
+								LinkedList<String> newWorlds = new LinkedList<>();
 								if(worldsTxt != null) {
 									for(String str : worldsTxt) {
 										if(pkt.copy || !str.equalsIgnoreCase(pkt.worldOldName)) {
@@ -266,125 +252,25 @@ public class IntegratedServer {
 						break;
 					case IPCPacket05RequestData.ID: {
 							IPCPacket05RequestData pkt = (IPCPacket05RequestData)packet;
-							if(pkt.request == IPCPacket05RequestData.REQUEST_LEVEL_EAG) {String realWorldName = pkt.worldName;
-								String worldOwner = "UNKNOWN";
-								String splitter = new String(new char[] { (char)253, (char)233, (char)233 });
-								if(realWorldName.contains(splitter)) {
-									int i = realWorldName.lastIndexOf(splitter);
-									worldOwner = realWorldName.substring(i + 3);
-									realWorldName = realWorldName.substring(0, i);
-								}
+							if(pkt.request == IPCPacket05RequestData.REQUEST_LEVEL_EAG) {
 								try {
-									
-									final int[] bytesWritten = new int[1];
-									final int[] lastUpdate = new int[1];
-									String pfx = "worlds/" + realWorldName + "/";
-									EPK2Compiler c = new EPK2Compiler(realWorldName, worldOwner, "epk/world152");
-									SYS.VFS.iterateFiles(pfx, false, (i) -> {
-										byte[] b = i.getAllBytes();
-										c.append(i.path.substring(pfx.length()), b);
-										bytesWritten[0] += b.length;
-										if (bytesWritten[0] - lastUpdate[0] > 10000) {
-											lastUpdate[0] = bytesWritten[0];
-											updateStatusString("selectWorld.progress.exporting." + pkt.request, bytesWritten[0]);
-										}
-									});
-									sendIPCPacket(new IPCPacket09RequestResponse(c.complete()));
+									sendIPCPacket(new IPCPacket09RequestResponse(WorldConverterEPK.exportWorld(pkt.worldName)));
 								} catch (Throwable t) {
-									throwExceptionToClient("Failed to export world '" + realWorldName + "' as EPK", t);
+									String realWorldName = pkt.worldName;
+									int i = realWorldName.lastIndexOf(new String(new char[] { (char)253, (char)233, (char)233 }));
+									if(i != -1) {
+										realWorldName = realWorldName.substring(0, i);
+									}
+									throwExceptionToClient("Failed to export world '" + realWorldName+ "' as EPK", t);
 									sendTaskFailed();
 								}
 							}else if(pkt.request == IPCPacket05RequestData.REQUEST_LEVEL_MCA) {
 								try {
-									final int[] bytesWritten = new int[1];
-									final int[] lastUpdate = new int[1];
-									String shortpfx = pkt.worldName + "/";
-									String pfx = "worlds/" + shortpfx;
-									ByteArrayOutputStream baos = new ByteArrayOutputStream();
-									ZipOutputStream c = new ZipOutputStream(baos);
-									c.setComment("contains backup of world '" + pkt.worldName + "'");
-									Map<ChunkCoordIntPair, byte[]> regions = new HashMap<>();
-									Map<ChunkCoordIntPair, byte[]> regions1 = new HashMap<>();
-									Map<ChunkCoordIntPair, byte[]> regionsn1 = new HashMap<>();
-									SYS.VFS.iterateFiles(pfx, false, (i) -> {
-										String currPath = i.path.substring(pfx.length());
-										try {
-											byte[] b = i.getAllBytes();
-											if(currPath.equals("level.dat")) {
-												NBTTagCompound worldDatNBT = CompressedStreamTools.decompress(b);
-												worldDatNBT.getCompoundTag("Data").setInteger("version", 19133);
-												b = CompressedStreamTools.compress(worldDatNBT);
-											}
-											if (currPath.startsWith("level0/")) {
-												regions.put(VFSChunkLoader.getChunkCoords(currPath.substring(7, currPath.length() - 4)), b);
-											} else if (currPath.startsWith("level1/")) {
-												regions1.put(VFSChunkLoader.getChunkCoords(currPath.substring(7, currPath.length() - 4)), b);
-											} else if (currPath.startsWith("level-1/")) {
-												regionsn1.put(VFSChunkLoader.getChunkCoords(currPath.substring(8, currPath.length() - 4)), b);
-											} else {
-												ZipEntry zipEntry = new ZipEntry(shortpfx + currPath);
-												c.putNextEntry(zipEntry);
-												c.write(b);
-												c.closeEntry();
-												bytesWritten[0] += b.length;
-												if (bytesWritten[0] - lastUpdate[0] > 10000) {
-													lastUpdate[0] = bytesWritten[0];
-													updateStatusString("selectWorld.progress.exporting." + pkt.request, bytesWritten[0]);
-												}
-											}
-										} catch (Throwable t) {
-											throwExceptionToClient("Failed to export file '" + currPath + "'", t);
-											sendTaskFailed();
-										}
-									});
-									Map<String, byte[]> regionsOut = MCAConverter.convertToMCA(regions);
-									for (String path : regionsOut.keySet()) {
-										byte[] b = regionsOut.get(path);
-										ZipEntry zipEntry = new ZipEntry(shortpfx + "region/" + path + ".mca");
-										c.putNextEntry(zipEntry);
-										c.write(b);
-										c.closeEntry();
-										bytesWritten[0] += b.length;
-										if (bytesWritten[0] - lastUpdate[0] > 10000) {
-											lastUpdate[0] = bytesWritten[0];
-											updateStatusString("selectWorld.progress.exporting." + pkt.request, bytesWritten[0]);
-										}
-									}
-									Map<String, byte[]> regions1Out = MCAConverter.convertToMCA(regions1);
-									for (String path : regions1Out.keySet()) {
-										byte[] b = regions1Out.get(path);
-										ZipEntry zipEntry = new ZipEntry(shortpfx + "DIM1/region/" + path + ".mca");
-										c.putNextEntry(zipEntry);
-										c.write(b);
-										c.closeEntry();
-										bytesWritten[0] += b.length;
-										if (bytesWritten[0] - lastUpdate[0] > 10000) {
-											lastUpdate[0] = bytesWritten[0];
-											updateStatusString("selectWorld.progress.exporting." + pkt.request, bytesWritten[0]);
-										}
-									}
-									Map<String, byte[]> regionsn1Out = MCAConverter.convertToMCA(regionsn1);
-									for (String path : regionsn1Out.keySet()) {
-										byte[] b = regionsn1Out.get(path);
-										ZipEntry zipEntry = new ZipEntry(shortpfx + "DIM-1/region/" + path + ".mca");
-										c.putNextEntry(zipEntry);
-										c.write(b);
-										c.closeEntry();
-										bytesWritten[0] += b.length;
-										if (bytesWritten[0] - lastUpdate[0] > 10000) {
-											lastUpdate[0] = bytesWritten[0];
-											updateStatusString("selectWorld.progress.exporting." + pkt.request, bytesWritten[0]);
-										}
-									}
-									c.close();
-									sendIPCPacket(new IPCPacket09RequestResponse(baos.toByteArray()));
+									sendIPCPacket(new IPCPacket09RequestResponse(WorldConverterMCA.exportWorld(pkt.worldName)));
 								} catch (Throwable t) {
-									throwExceptionToClient("Failed to export world '" + pkt.worldName + "' as MCA", t);
+									throwExceptionToClient("Failed to export world '" + pkt.worldName+ "' as MCA", t);
 									sendTaskFailed();
 								}
-							}else {
-								System.err.println("Unknown IPCPacket05RequestData type '" + pkt.request + "'");
-								sendTaskFailed();
 							}
 						}
 						break;
@@ -409,122 +295,20 @@ public class IntegratedServer {
 							IPCPacket07ImportWorld pkt = (IPCPacket07ImportWorld)packet;
 							if(isServerStopped()) {
 								if(pkt.worldFormat == IPCPacket07ImportWorld.WORLD_FORMAT_EAG) {
-									String folder = VFSSaveHandler.worldNameToFolderName(pkt.worldName);
 									try {
-										VFile dir = new VFile("worlds", folder);
-										EPKDecompiler dc = new EPKDecompiler(pkt.worldData);
-										EPKDecompiler.FileEntry f = null;
-										int lastProgUpdate = 0;
-										int prog = 0;
-										boolean hasReadType = dc.isOld();
-										while((f = dc.readFile()) != null) {
-											byte[] b = f.data;
-											if(!hasReadType) {
-												if(f.type.equals("HEAD") && f.name.equals("file-type") && EPKDecompiler.readASCII(f.data).equals("epk/world152")) {
-													hasReadType = true;
-													continue;
-												}else {
-													throw new IOException("file does not contain a singleplayer 1.5.2 world!");
-												}
-											}
-											if(f.type.equals("FILE")) {
-												if(f.name.equals("level.dat")) {
-													NBTTagCompound worldDatNBT = CompressedStreamTools.decompress(b);
-													worldDatNBT.getCompoundTag("Data").setString("LevelName", pkt.worldName);
-													worldDatNBT.getCompoundTag("Data").setLong("LastPlayed", System.currentTimeMillis());
-													b = CompressedStreamTools.compress(worldDatNBT);
-												}
-												VFile ff = new VFile(dir, f.name);
-												ff.setAllBytes(b);
-												prog += b.length;
-												if(prog - lastProgUpdate > 10000) {
-													lastProgUpdate = prog;
-													updateStatusString("selectWorld.progress.importing." + pkt.worldFormat, prog);
-												}
-											}
-										}
-										String[] worldsTxt = SYS.VFS.getFile("worlds.txt").getAllLines();
-										if(worldsTxt == null || worldsTxt.length <= 0) {
-											worldsTxt = new String[] { folder };
-										}else {
-											String[] tmp = worldsTxt;
-											worldsTxt = new String[worldsTxt.length + 1];
-											System.arraycopy(tmp, 0, worldsTxt, 0, tmp.length);
-											worldsTxt[worldsTxt.length - 1] = folder;
-										}
-										SYS.VFS.getFile("worlds.txt").setAllChars(String.join("\n", worldsTxt));
+										WorldConverterEPK.importWorld(pkt.worldData, pkt.worldName);
 										sendIPCPacket(new IPCPacketFFProcessKeepAlive(IPCPacket07ImportWorld.ID));
 									}catch(Throwable t) {
-										SYS.VFS.deleteFiles("worlds/" + folder + "/");
+										SYS.VFS.deleteFiles("worlds/" + VFSSaveHandler.worldNameToFolderName(pkt.worldName) + "/");
 										throwExceptionToClient("Failed to import world '" + pkt.worldName + "' as EPK", t);
 										sendTaskFailed();
 									}
 								}else if(pkt.worldFormat == IPCPacket07ImportWorld.WORLD_FORMAT_MCA) {
-									String folder = VFSSaveHandler.worldNameToFolderName(pkt.worldName);
 									try {
-										VFile dir = new VFile("worlds", folder);
-										ZipInputStream folderNames = new ZipInputStream(new ByteArrayInputStream(pkt.worldData));
-										ZipEntry folderNameFile = null;
-										List<char[]> fileNames = new ArrayList<>();
-										while((folderNameFile = folderNames.getNextEntry()) != null) {
-											if (folderNameFile.getName().contains("__MACOSX/")) continue;
-											if (folderNameFile.isDirectory()) continue;
-											String lowerName = folderNameFile.getName().toLowerCase();
-											if (!(lowerName.endsWith(".dat") || lowerName.endsWith(".mca") || lowerName.endsWith(".mcr"))) continue;
-											fileNames.add(folderNameFile.getName().toCharArray());
-										}
-										final int[] i = new int[] { 0 };
-										while(fileNames.get(0).length > i[0] && fileNames.stream().allMatch(w -> w[i[0]] == fileNames.get(0)[i[0]])) i[0]++;
-										int folderPrefixOffset = i[0];
-										ZipInputStream dc = new ZipInputStream(new ByteArrayInputStream(pkt.worldData));
-										ZipEntry f = null;
-										int lastProgUpdate = 0;
-										int prog = 0;
-										byte[] bb = new byte[16000];
-										while ((f = dc.getNextEntry()) != null) {
-											if (f.getName().contains("__MACOSX/")) continue;
-											if (f.isDirectory()) continue;
-											String lowerName = f.getName().toLowerCase();
-											if (!(lowerName.endsWith(".dat") || lowerName.endsWith(".mca") || lowerName.endsWith(".mcr"))) continue;
-											ByteArrayOutputStream baos = new ByteArrayOutputStream();
-											int len;
-											while ((len = dc.read(bb)) != -1) {
-												baos.write(bb, 0, len);
-											}
-											baos.close();
-											byte[] b = baos.toByteArray();
-											String fileName = f.getName().substring(folderPrefixOffset);
-											if (fileName.equals("level.dat")) {
-												NBTTagCompound worldDatNBT = CompressedStreamTools.decompress(b);
-												worldDatNBT.getCompoundTag("Data").setString("LevelName", pkt.worldName);
-												worldDatNBT.getCompoundTag("Data").setLong("LastPlayed", System.currentTimeMillis());
-												b = CompressedStreamTools.compress(worldDatNBT);
-											}
-											if (fileName.endsWith(".mcr") || fileName.endsWith(".mca")) {
-												MCAConverter.convertFromMCA(dir, b, fileName);
-											} else {
-												VFile ff = new VFile(dir, fileName);
-												ff.setAllBytes(b);
-											}
-											prog += b.length;
-											if (prog - lastProgUpdate > 10000) {
-												lastProgUpdate = prog;
-												updateStatusString("selectWorld.progress.importing." + pkt.worldFormat, prog);
-											}
-										}
-										String[] worldsTxt = SYS.VFS.getFile("worlds.txt").getAllLines();
-										if(worldsTxt == null || worldsTxt.length <= 0) {
-											worldsTxt = new String[] { folder };
-										}else {
-											String[] tmp = worldsTxt;
-											worldsTxt = new String[worldsTxt.length + 1];
-											System.arraycopy(tmp, 0, worldsTxt, 0, tmp.length);
-											worldsTxt[worldsTxt.length - 1] = folder;
-										}
-										SYS.VFS.getFile("worlds.txt").setAllChars(String.join("\n", worldsTxt));
+										WorldConverterMCA.importWorld(pkt.worldData, pkt.worldName);
 										sendIPCPacket(new IPCPacketFFProcessKeepAlive(IPCPacket07ImportWorld.ID));
 									}catch(Throwable t) {
-										SYS.VFS.deleteFiles("worlds/" + folder + "/");
+										SYS.VFS.deleteFiles("worlds/" + VFSSaveHandler.worldNameToFolderName(pkt.worldName) + "/");
 										throwExceptionToClient("Failed to import world '" + pkt.worldName + "' as MCA", t);
 										sendTaskFailed();
 									}
@@ -586,7 +370,6 @@ public class IntegratedServer {
 						}
 						break;
 					case IPCPacket0EListWorlds.ID: {
-							IPCPacket0EListWorlds pkt = (IPCPacket0EListWorlds)packet;
 							if(isServerStopped()) {
 								String[] worlds = SYS.VFS.getFile("worlds.txt").getAllLines();
 								if(worlds == null || (worlds.length == 1 && worlds[0].trim().length() <= 0)) {
@@ -596,8 +379,8 @@ public class IntegratedServer {
 									sendIPCPacket(new IPCPacket16NBTList(IPCPacket16NBTList.WORLD_LIST, new LinkedList<NBTTagCompound>()));
 									break;
 								}
-								LinkedList<String> updatedList = new LinkedList();
-								LinkedList<NBTTagCompound> sendListNBT = new LinkedList();
+								LinkedList<String> updatedList = new LinkedList<>();
+								LinkedList<NBTTagCompound> sendListNBT = new LinkedList<>();
 								boolean rewrite = false;
 								for(String w : worlds) {
 									byte[] dat = (new VFile("worlds", w, "level.dat")).getAllBytes();
@@ -683,13 +466,13 @@ public class IntegratedServer {
 				continue;
 			}
 		}
-		long watchDog = System.currentTimeMillis();
+		long watchDog = SysUtil.steadyTimeMillis();
 		itr = cur.iterator();
 		int overflow = 0;
 		while(itr.hasNext()) {
 			PKT msg = itr.next();
 			if(!msg.channel.equals("IPC")) {
-				if(System.currentTimeMillis() - watchDog > 500l) {
+				if(SysUtil.steadyTimeMillis() - watchDog > 500l) {
 					++overflow;
 					continue;
 				}
@@ -720,18 +503,12 @@ public class IntegratedServer {
 			return;
 		}
 		
-		ArrayBuffer arb = ArrayBuffer.create(serialized.length);
-		Uint8Array ar = Uint8Array.create(arb);
-		ar.set(serialized);
-		sendWorkerPacket("IPC", arb);
+		sendWorkerPacket("IPC", TeaVMUtils.unwrapArrayBuffer(serialized));
 	}
 	
 	public static void sendPlayerPacket(String channel, byte[] buf) {
 		//System.out.println("[Server][SEND][" + channel + "]: " + buf.length);
-		ArrayBuffer arb = ArrayBuffer.create(buf.length);
-		Uint8Array ar = Uint8Array.create(arb);
-		ar.set(buf);
-		sendWorkerPacket("NET|" + channel, arb);
+		sendWorkerPacket("NET|" + channel, TeaVMUtils.unwrapArrayBuffer(buf));
 	}
 	
 	private static boolean isRunning = false;
@@ -749,6 +526,8 @@ public class IntegratedServer {
 				sendIPCPacket(new IPCPacketFFProcessKeepAlive(IPCPacket01StopServer.ID));
 				currentProcess = null;
 			}
+		}else {
+			SysUtil.sleep(50);
 		}
 	}
 	
@@ -767,11 +546,7 @@ public class IntegratedServer {
 			
 			mainLoop();
 			
-			try {
-				Thread.sleep(1l); // allow some async to occur
-			}catch(InterruptedException e) {
-				System.err.println("you eagler");
-			}
+			SysUtil.immediateContinue();
 		}
 		
 		// yee

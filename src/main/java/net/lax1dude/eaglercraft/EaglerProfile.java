@@ -44,8 +44,8 @@ public class EaglerProfile {
 	public static final int[] SKIN_DATA_SIZE = new int[] { 64*32*4, 64*64*4, -9, -9, 1, 64*64*4, -9 };
 	public static final int[] CAPE_DATA_SIZE = new int[] { 32*32*4, -9, 1 };
 	
-	public static ArrayList<EaglerProfileSkin> skins = new ArrayList();
-	public static ArrayList<EaglerProfileCape> capes = new ArrayList();
+	public static ArrayList<EaglerProfileSkin> skins = new ArrayList<>();
+	public static ArrayList<EaglerProfileCape> capes = new ArrayList<>();
 	
 	public static final EaglercraftRandom rand;
 	

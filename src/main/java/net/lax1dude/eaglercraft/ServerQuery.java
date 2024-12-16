@@ -29,7 +29,7 @@ public interface ServerQuery {
 				this.serverBrand = "Unknown";
 				this.serverName = "Unknown";
 				this.serverTime = 0l;
-				this.clientTime = System.currentTimeMillis();
+				this.clientTime = EaglerAdapter.steadyTimeMillis();
 				this.serverCracked = false;
 				this.rateLimitStatus = this.responseType.equals("locked") ? RateLimit.LOCKED : RateLimit.BLOCKED;
 				this.rateLimitIsTCP = false;
@@ -39,7 +39,7 @@ public interface ServerQuery {
 				this.serverBrand = obj.getString("brand");
 				this.serverName = obj.getString("name");
 				this.serverTime = obj.getLong("time");
-				this.clientTime = System.currentTimeMillis();
+				this.clientTime = EaglerAdapter.steadyTimeMillis();
 				this.serverCracked = obj.optBoolean("cracked", false);
 				this.rateLimitStatus = null;
 				this.rateLimitIsTCP = false;
@@ -53,7 +53,7 @@ public interface ServerQuery {
 			this.serverBrand = "Unknown";
 			this.serverName = "Unknown";
 			this.serverTime = 0l;
-			this.clientTime = System.currentTimeMillis();
+			this.clientTime = EaglerAdapter.steadyTimeMillis();
 			this.serverCracked = false;
 			this.rateLimitStatus = lockedNotBlocked ? RateLimit.LOCKED : RateLimit.BLOCKED;
 			this.rateLimitIsTCP = true;
@@ -90,12 +90,9 @@ public interface ServerQuery {
 	// java.util.concurrent classes for semaphore-like behavior
 
 	public default boolean awaitResponseAvailable(long timeout) {
-		long start = System.currentTimeMillis();
-		while(isQueryOpen() && responseAvailable() <= 0 && (timeout <= 0l || System.currentTimeMillis() - start < timeout)) {
-			try {
-				Thread.sleep(0l, 250000);
-			} catch (InterruptedException e) {
-			}
+		long start = EaglerAdapter.steadyTimeMillis();
+		while(isQueryOpen() && responseAvailable() <= 0 && (timeout <= 0l || EaglerAdapter.steadyTimeMillis() - start < timeout)) {
+			EaglerAdapter.sleep(10);
 		}
 		return responseAvailable() > 0;
 	}
@@ -105,12 +102,9 @@ public interface ServerQuery {
 	}
 	
 	public default boolean awaitResponseBinaryAvailable(long timeout) {
-		long start = System.currentTimeMillis();
-		while(isQueryOpen() && responseBinaryAvailable() <= 0 && (timeout <= 0l || System.currentTimeMillis() - start < timeout)) {
-			try {
-				Thread.sleep(0l, 250000);
-			} catch (InterruptedException e) {
-			}
+		long start = EaglerAdapter.steadyTimeMillis();
+		while(isQueryOpen() && responseBinaryAvailable() <= 0 && (timeout <= 0l || EaglerAdapter.steadyTimeMillis() - start < timeout)) {
+			EaglerAdapter.sleep(10);
 		}
 		return responseBinaryAvailable() > 0;
 	}

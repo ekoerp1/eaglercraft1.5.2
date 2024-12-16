@@ -4,7 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import net.lax1dude.eaglercraft.EaglerInflater;
+import net.lax1dude.eaglercraft.EaglerMisc;
 
 public class Packet51MapChunk extends Packet {
 	/** The x-position of the transmitted chunk, in chunk coordinates. */
@@ -82,7 +82,7 @@ public class Packet51MapChunk extends Packet {
 				var3 += 256;
 			}
 
-			this.compressedChunkData = EaglerInflater.uncompress(temp);
+			this.compressedChunkData = EaglerMisc.uncompress(temp);
 		}else {
 			this.tempLength &= 0xFFFFFFF;
 			this.compressedChunkData = new byte[this.tempLength];

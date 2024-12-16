@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import net.lax1dude.eaglercraft.EaglerAdapter;
 import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2;
+import net.lax1dude.eaglercraft.glemu.StreamBuffer.StreamBufferInstance;
 import net.lax1dude.eaglercraft.glemu.vector.Matrix4f;
 import net.lax1dude.eaglercraft.glemu.vector.Vector3f;
 import net.lax1dude.eaglercraft.glemu.vector.Vector4f;
@@ -132,100 +133,132 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	public static final boolean isWebGL = _wisWebGL();
 
-	private static final GLObjectMap<TextureGL> texObjects = new GLObjectMap(256);
+	static final GLObjectMap<TextureGL> texObjects = new GLObjectMap<>(256);
 
-	private static boolean enableTexture2D = false;
-	private static boolean enableTexture2D_1 = false;
-	private static boolean enableLighting = false;
-	private static boolean enableAlphaTest = false;
-	private static float alphaThresh = 0.1f;
+	static boolean enableTexture2D = false;
+	static boolean enableTexture2D_1 = false;
+	static boolean enableLighting = false;
+	static boolean enableAlphaTest = false;
+	static float alphaThresh = 0.1f;
 
-	private static boolean isCompilingDisplayList = false;
-	private static DisplayList compilingDisplayList = null;
+	static boolean isDepthTest = false;
+	static int currentDepthFunc = -99999;
+	static boolean isCullFace = false;
+	static int currentCullFace = -99999;
+	static boolean isPolygonOffset = false;
+	static float polygonOffset1 = -999.9f;
+	static float polygonOffset2 = -999.9f;
+	static boolean isBlend = false;
+	static int blendSRC = 0;
+	static int blendDST = 0;
+	static int colorMask = 15;
+	static boolean isDepthMask = true;
 
-	private static boolean enableColorArray = false;
-	private static boolean enableNormalArray = false;
-	private static boolean enableTex0Array = false;
-	private static boolean enableTex1Array = false;
+	static boolean isCompilingDisplayList = false;
+	static DisplayList compilingDisplayList = null;
 
-	private static boolean enableAnisotropicFix = false;
-	private static float anisotropicFixX = 1024.0f;
-	private static float anisotropicFixY = 1024.0f;
+	static boolean enableColorArray = false;
+	static boolean enableNormalArray = false;
+	static boolean enableTex0Array = false;
+	static boolean enableTex1Array = false;
 
-	private static float colorR = 1.0f;
-	private static float colorG = 1.0f;
-	private static float colorB = 1.0f;
-	private static float colorA = 1.0f;
+	static boolean enableAnisotropicFix = false;
+	static int anisotropicFixSerial = 0;
+	static float anisotropicFixX = 1024.0f;
+	static float anisotropicFixY = 1024.0f;
 
-	private static float normalX = 1.0f;
-	private static float normalY = 0.0f;
-	private static float normalZ = 0.0f;
+	static int colorSerial = 0;
+	static float colorR = 1.0f;
+	static float colorG = 1.0f;
+	static float colorB = 1.0f;
+	static float colorA = 1.0f;
 
-	private static int selectedTex = 0;
-	private static int selectedClientTex = 0;
-	private static float tex0X = 0;
-	private static float tex0Y = 0;
-	private static float tex1X = 0;
-	private static float tex1Y = 0;
-	private static TextureGL boundTexture0 = null;
-	private static boolean enableAnisotropicPatch = false;
-	private static boolean hintAnisotropicPatch = false;
-	private static boolean swapRB = false;
+	static int normalSerial = 0;
+	static float normalX = 1.0f;
+	static float normalY = 0.0f;
+	static float normalZ = 0.0f;
+
+	static int selectedTex = 0;
+	static int selectedClientTex = 0;
+	static int[] boundTexI = new int[2];
+	static TextureGL[] boundTex = new TextureGL[2];
+	static int tex0Serial = 0;
+	static float tex0X = 0;
+	static float tex0Y = 0;
+	static int tex1Serial = 0;
+	static float tex1X = 0;
+	static float tex1Y = 0;
+	static TextureGL boundTexture0 = null;
+	static boolean enableAnisotropicPatch = false;
+	static boolean hintAnisotropicPatch = false;
+	static boolean swapRB = false;
 
 	public static final void anisotropicPatch(boolean e) {
 		enableAnisotropicPatch = e;
 	}
 
-	private static boolean enableTexGen = false;
-	private static boolean enableColorMaterial = false;
+	static boolean enableTexGen = false;
+	static boolean enableColorMaterial = false;
 
-	private static int texS_plane = 0;
-	private static float texS_X = 0.0f;
-	private static float texS_Y = 0.0f;
-	private static float texS_Z = 0.0f;
-	private static float texS_W = 0.0f;
+	static int texPlaneSerial = 0;
+	static int texSSerial = 0;
+	static int texS_plane = 0;
+	static float texS_X = 0.0f;
+	static float texS_Y = 0.0f;
+	static float texS_Z = 0.0f;
+	static float texS_W = 0.0f;
 
-	private static int texT_plane = 0;
-	private static float texT_X = 0.0f;
-	private static float texT_Y = 0.0f;
-	private static float texT_Z = 0.0f;
-	private static float texT_W = 0.0f;
+	static int texTSerial = 0;
+	static int texT_plane = 0;
+	static float texT_X = 0.0f;
+	static float texT_Y = 0.0f;
+	static float texT_Z = 0.0f;
+	static float texT_W = 0.0f;
 
-	private static int texR_plane = 0;
-	private static float texR_X = 0.0f;
-	private static float texR_Y = 0.0f;
-	private static float texR_Z = 0.0f;
-	private static float texR_W = 0.0f;
+	static int texRSerial = 0;
+	static int texR_plane = 0;
+	static float texR_X = 0.0f;
+	static float texR_Y = 0.0f;
+	static float texR_Z = 0.0f;
+	static float texR_W = 0.0f;
 
-	private static int texQ_plane = 0;
-	private static float texQ_X = 0.0f;
-	private static float texQ_Y = 0.0f;
-	private static float texQ_Z = 0.0f;
-	private static float texQ_W = 0.0f;
+	static int texQSerial = 0;
+	static int texQ_plane = 0;
+	static float texQ_X = 0.0f;
+	static float texQ_Y = 0.0f;
+	static float texQ_Z = 0.0f;
+	static float texQ_W = 0.0f;
 
-	private static float fogColorR = 1.0f;
-	private static float fogColorG = 1.0f;
-	private static float fogColorB = 1.0f;
-	private static float fogColorA = 1.0f;
-	private static int fogMode = 1;
-	private static boolean fogEnabled = false;
-	private static boolean fogPremultiply = false;
-	private static float fogStart = 1.0f;
-	private static float fogEnd = 1.0f;
-	private static float fogDensity = 1.0f;
+	static int fogColorSerial = 0;
+	static float fogColorR = 1.0f;
+	static float fogColorG = 1.0f;
+	static float fogColorB = 1.0f;
+	static float fogColorA = 1.0f;
+	static int fogCfgSerial = 0;
+	static int fogMode = 1;
+	static boolean fogEnabled = false;
+	static float fogStart = 1.0f;
+	static float fogEnd = 1.0f;
+	static float fogDensity = 1.0f;
 
-	private static int bytesUploaded = 0;
-	private static int vertexDrawn = 0;
-	private static int triangleDrawn = 0;
+	static int bytesUploaded = 0;
+	static int vertexDrawn = 0;
+	static int triangleDrawn = 0;
 
-	private static int matrixMode = GL_MODELVIEW;
+	static int matrixMode = GL_MODELVIEW;
 
+	static int matModelSerialCounter = 0;
+	static int[] matModelVSerial = new int[32];
 	static Matrix4f[] matModelV = new Matrix4f[32];
 	static int matModelPointer = 0;
 
+	static int matProjSerialCounter = 0;
+	static int[] matProjVSerial = new int[6];
 	static Matrix4f[] matProjV = new Matrix4f[6];
 	static int matProjPointer = 0;
 
+	static int matTexSerialCounter = 0;
+	static int[] matTexVSerial = new int[16];
 	static Matrix4f[] matTexV = new Matrix4f[16];
 	static int matTexPointer = 0;
 
@@ -269,8 +302,8 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 		}
 	}
 
-	private static final HashMap<Integer, DisplayList> displayLists = new HashMap();
-	private static final HashMap<Integer, DisplayList> displayListsInitialized = new HashMap();
+	private static final HashMap<Integer, DisplayList> displayLists = new HashMap<>();
+	private static final HashMap<Integer, DisplayList> displayListsInitialized = new HashMap<>();
 
 	public static final int getDisplayListCount() {
 		return displayListsInitialized.size();
@@ -279,13 +312,22 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	public static final void glEnable(int p1) {
 		switch (p1) {
 		case GL_DEPTH_TEST:
-			_wglEnable(_wGL_DEPTH_TEST);
+			if(!isDepthTest) {
+				_wglEnable(_wGL_DEPTH_TEST);
+				isDepthTest = true;
+			}
 			break;
 		case GL_CULL_FACE:
-			_wglEnable(_wGL_CULL_FACE);
+			if(!isCullFace) {
+				_wglEnable(_wGL_CULL_FACE);
+				isCullFace = true;
+			}
 			break;
 		case GL_BLEND:
-			_wglEnable(_wGL_BLEND);
+			if(!isBlend) {
+				_wglEnable(_wGL_BLEND);
+				isBlend = true;
+			}
 			break;
 		case GL_RESCALE_NORMAL:
 			break;
@@ -316,7 +358,10 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			enableTexGen = true;
 			break;
 		case GL_POLYGON_OFFSET_FILL:
-			_wglEnable(_wGL_POLYGON_OFFSET_FILL);
+			if(!isPolygonOffset) {
+				_wglEnable(_wGL_POLYGON_OFFSET_FILL);
+				isPolygonOffset = true;
+			}
 			break;
 		case EAG_SWAP_RB:
 			swapRB = true;
@@ -348,7 +393,10 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 		default:
 			break;
 		}
-		_wglDepthFunc(f);
+		if(f != currentDepthFunc) {
+			_wglDepthFunc(f);
+			currentDepthFunc = f;
+		}
 	}
 
 	public static final void glAlphaFunc(int p1, float p2) {
@@ -356,27 +404,33 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void glCullFace(int p1) {
-		_wglCullFace(p1);
+		if(p1 != currentCullFace) {
+			_wglCullFace(p1);
+			currentCullFace = p1;
+		}
 	}
 
 	public static final void glMatrixMode(int p1) {
 		matrixMode = p1;
 	}
 
-	private static final Matrix4f getMatrix() {
+	private static final Matrix4f getMatrixIncrSerial() {
 		switch (matrixMode) {
 		case GL_MODELVIEW:
 		default:
+			matModelVSerial[matModelPointer] = ++matModelSerialCounter;
 			return matModelV[matModelPointer];
 		case GL_PROJECTION:
+			matProjVSerial[matProjPointer] = ++matProjSerialCounter;
 			return matProjV[matProjPointer];
 		case GL_TEXTURE:
+			matTexVSerial[matTexPointer] = ++matTexSerialCounter;
 			return matTexV[matTexPointer];
 		}
 	}
 
 	public static final void glLoadIdentity() {
-		getMatrix().setIdentity();
+		getMatrixIncrSerial().setIdentity();
 	}
 
 	public static final void glViewport(int p1, int p2, int p3, int p4) {
@@ -388,7 +442,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void glOrtho(float left, float right, float bottom, float top, float zNear, float zFar) {
-		Matrix4f res = getMatrix();
+		Matrix4f res = getMatrixIncrSerial();
 		res.m00 = 2.0f / (right - left);
 		res.m01 = 0.0f;
 		res.m02 = 0.0f;
@@ -411,7 +465,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	public static final void glTranslatef(float p1, float p2, float p3) {
 		deevis.set(p1, p2, p3);
-		getMatrix().translate(deevis);
+		getMatrixIncrSerial().translate(deevis);
 		if (isCompilingDisplayList) {
 			System.err.println("matrix is not supported while recording display list use tessellator class instead");
 		}
@@ -424,13 +478,22 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	public static final void glDisable(int p1) {
 		switch (p1) {
 		case GL_DEPTH_TEST:
-			_wglDisable(_wGL_DEPTH_TEST);
+			if(isDepthTest) {
+				_wglDisable(_wGL_DEPTH_TEST);
+				isDepthTest = false;
+			}
 			break;
 		case GL_CULL_FACE:
-			_wglDisable(_wGL_CULL_FACE);
+			if(isCullFace) {
+				_wglDisable(_wGL_CULL_FACE);
+				isCullFace = false;
+			}
 			break;
 		case GL_BLEND:
-			_wglDisable(_wGL_BLEND);
+			if(isBlend) {
+				_wglDisable(_wGL_BLEND);
+				isBlend = false;
+			}
 			break;
 		case GL_RESCALE_NORMAL:
 			break;
@@ -461,7 +524,10 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			enableTexGen = false;
 			break;
 		case GL_POLYGON_OFFSET_FILL:
-			_wglDisable(_wGL_POLYGON_OFFSET_FILL);
+			if(isPolygonOffset) {
+				_wglDisable(_wGL_POLYGON_OFFSET_FILL);
+				isPolygonOffset = false;
+			}
 			break;
 		case EAG_SWAP_RB:
 			swapRB = false;
@@ -472,6 +538,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void glColor4f(float p1, float p2, float p3, float p4) {
+		++colorSerial;
 		colorR = p1;
 		colorG = p2;
 		colorB = p3;
@@ -510,12 +577,16 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	}
 
+	static int lightPos0Serial = 0;
+	static int lightPos1Serial = 0;
 	private static Vector4f lightPos0vec0 = new Vector4f();
 	private static Vector4f lightPos1vec0 = new Vector4f();
-	private static Vector4f lightPos0vec = new Vector4f();
-	private static Vector4f lightPos1vec = new Vector4f();
+	static Vector4f lightPos0vec = new Vector4f();
+	static Vector4f lightPos1vec = new Vector4f();
 
 	public static final void copyModelToLightMatrix() {
+		++lightPos0Serial;
+		++lightPos1Serial;
 		lightPos0vec0.set(lightPos0vec);
 		lightPos1vec0.set(lightPos1vec);
 		lightPos0vec.set(0.2f, 1.0f, -0.7f, 0.0f);
@@ -527,6 +598,8 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void flipLightMatrix() {
+		++lightPos0Serial;
+		++lightPos1Serial;
 		lightPos0vec.x = -lightPos0vec.x;
 		lightPos1vec.x = -lightPos1vec.x;
 		lightPos0vec.y = -lightPos0vec.y;
@@ -536,6 +609,8 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void revertLightMatrix() {
+		++lightPos0Serial;
+		++lightPos1Serial;
 		lightPos0vec.set(lightPos0vec0);
 		lightPos1vec.set(lightPos1vec0);
 	}
@@ -547,6 +622,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			if (matModelPointer < matModelV.length - 1) {
 				++matModelPointer;
 				matModelV[matModelPointer].load(matModelV[matModelPointer - 1]);
+				matModelVSerial[matModelPointer] = matModelVSerial[matModelPointer - 1];
 			} else {
 				System.err.println("modelview matrix stack overflow");
 			}
@@ -555,6 +631,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			if (matProjPointer < matProjV.length - 1) {
 				++matProjPointer;
 				matProjV[matProjPointer].load(matProjV[matProjPointer - 1]);
+				matProjVSerial[matProjPointer] = matProjVSerial[matProjPointer - 1];
 			} else {
 				System.err.println("projection matrix stack overflow");
 			}
@@ -563,6 +640,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			if (matTexPointer < matTexV.length - 1) {
 				++matTexPointer;
 				matTexV[matTexPointer].load(matTexV[matTexPointer - 1]);
+				matTexVSerial[matTexPointer] = matTexVSerial[matTexPointer - 1];
 			} else {
 				System.err.println("texture matrix stack overflow");
 			}
@@ -574,7 +652,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	public static final void glRotatef(float p1, float p2, float p3, float p4) {
 		deevis.set(p2, p3, p4);
-		getMatrix().rotate(p1 * toRad, deevis);
+		getMatrixIncrSerial().rotate(p1 * toRad, deevis);
 		if (isCompilingDisplayList) {
 			System.err.println("matrix is not supported while recording display list use tessellator class instead");
 		}
@@ -631,7 +709,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	public static final void glScalef(float p1, float p2, float p3) {
 		deevis.set(p1, p2, p3);
-		getMatrix().scale(deevis);
+		getMatrixIncrSerial().scale(deevis);
 		if (isCompilingDisplayList) {
 			System.err.println("matrix is not supported while recording display list use tessellator class instead");
 		}
@@ -640,20 +718,46 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	private static final Matrix4f tmpMat = new Matrix4f();
 
 	public static final void glMultMatrixf(Matrix4f mat) {
-		getMatrix().load(Matrix4f.mul(getMatrix(), mat, tmpMat));
+		getMatrixIncrSerial().load(Matrix4f.mul(getMatrixIncrSerial(), mat, tmpMat));
 	}
 
 	public static final void glBlendFunc(int p1, int p2) {
-		fogPremultiply = (p1 == GL_ONE && p2 == GL_ONE_MINUS_SRC_ALPHA);
-		_wglBlendFunc(p1, p2);
+		if(overlayFBOBlending) {
+			int i = p1 | 0x10000;
+			int j = p2 | 0x10000;
+			if(blendSRC != i || blendDST != j) {
+				_wglBlendFuncSeparate(p1, p2, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+				blendSRC = i;
+				blendDST = j;
+			}
+		}else {
+			if(blendSRC != p1 || blendDST != p2) {
+				_wglBlendFunc(p1, p2);
+				blendSRC = p1;
+				blendDST = p2;
+			}
+		}
+	}
+
+	private static boolean overlayFBOBlending = false;
+
+	public static final void enableOverlayFramebufferBlending(boolean en) {
+		overlayFBOBlending = en;
 	}
 
 	public static final void glDepthMask(boolean p1) {
-		_wglDepthMask(p1);
+		if(isDepthMask != p1) {
+			_wglDepthMask(p1);
+			isDepthMask = p1;
+		}
 	}
 
 	public static final void glColorMask(boolean p1, boolean p2, boolean p3, boolean p4) {
-		_wglColorMask(p1, p2, p3, p4);
+		int hsh = (p1 ? 1 : 0) | (p2 ? 2 : 0) | (p3 ? 4 : 0) | (p4 ? 8 : 0);
+		if(colorMask != hsh) {
+			_wglColorMask(p1, p2, p3, p4);
+			colorMask = hsh;
+		}
 	}
 
 	private static final void updateAnisotropicPatch() {
@@ -661,6 +765,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			enableAnisotropicFix = false;
 			if (enableAnisotropicPatch && boundTexture0 != null && boundTexture0.anisotropic && boundTexture0.nearest) {
 				enableAnisotropicFix = true;
+				++anisotropicFixSerial;
 				anisotropicFixX = boundTexture0.w;
 				anisotropicFixY = boundTexture0.h;
 			}
@@ -668,11 +773,29 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void glBindTexture(int p1, int p2) {
-		TextureGL t = texObjects.get(p2);
-		_wglBindTexture(_wGL_TEXTURE_2D, t);
-		if (selectedTex == 0) {
-			boundTexture0 = t;
-			updateAnisotropicPatch();
+		if(boundTexI[selectedTex] != p2) {
+			TextureGL t = texObjects.get(p2);
+			if(boundTex[selectedTex] != t) {
+				_wglBindTexture(_wGL_TEXTURE_2D, t);
+				if (selectedTex == 0) {
+					boundTexture0 = t;
+					updateAnisotropicPatch();
+				}
+				boundTex[selectedTex] = t;
+			}
+			boundTexI[selectedTex] = p2;
+		}
+	}
+
+	public static final void glBindTexture(int p1, TextureGL p2) {
+		boundTexI[selectedTex] = -1;
+		if(boundTex[selectedTex] != p2) {
+			_wglBindTexture(_wGL_TEXTURE_2D, p2);
+			if (selectedTex == 0) {
+				boundTexture0 = p2;
+				updateAnisotropicPatch();
+			}
+			boundTex[selectedTex] = p2;
 		}
 	}
 
@@ -704,6 +827,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void glNormal3f(float p1, float p2, float p3) {
+		++normalSerial;
 		float len = (float) Math.sqrt(p1 * p1 + p2 * p2 + p3 * p3);
 		normalX = p1 / len;
 		normalY = p2 / len;
@@ -720,8 +844,10 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void _wglBindVertexArray0(BufferArrayGL p1) {
-		currentArray = p1;
-		_wglBindVertexArray(p1);
+		if(currentArray != p1) {
+			currentArray = p1;
+			_wglBindVertexArray(p1);
+		}
 	}
 
 	private static int displayListId = 0;
@@ -787,7 +913,9 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	public static final HighPolyMesh loadMesh(String path) {
 		try {
-			return HighPolyMesh.loadMeshData(EaglerAdapter.loadResourceBytes(path));
+			HighPolyMesh ret = HighPolyMesh.loadMeshData(EaglerAdapter.loadResourceBytes(path));
+			currentArray = ret.vertexArray;
+			return ret;
 		} catch (IOException ex) {
 			System.err.println("Could not load HighPolyMesh! " + ex.toString());
 			ex.printStackTrace();
@@ -796,6 +924,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void glColor3f(float p1, float p2, float p3) {
+		++colorSerial;
 		colorR = p1;
 		colorG = p2;
 		colorB = p3;
@@ -817,6 +946,8 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 		}
 		switch (p1) {
 		case GL_S:
+			++texPlaneSerial;
+			++texSSerial;
 			texS_plane = (p2 == GL_EYE_PLANE ? 1 : 0);
 			texS_X = vec.x;
 			texS_Y = vec.y;
@@ -824,6 +955,8 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			texS_W = vec.w;
 			break;
 		case GL_T:
+			++texPlaneSerial;
+			++texTSerial;
 			texT_plane = (p2 == GL_EYE_PLANE ? 1 : 0);
 			texT_X = vec.x;
 			texT_Y = vec.y;
@@ -831,6 +964,8 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			texT_W = vec.w;
 			break;
 		case GL_R:
+			++texPlaneSerial;
+			++texRSerial;
 			texR_plane = (p2 == GL_EYE_PLANE ? 1 : 0);
 			texR_X = vec.x;
 			texR_Y = vec.y;
@@ -838,6 +973,8 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			texR_W = vec.w;
 			break;
 		case GL_Q:
+			++texPlaneSerial;
+			++texQSerial;
 			texQ_plane = (p2 == GL_EYE_PLANE ? 1 : 0);
 			texQ_X = vec.x;
 			texQ_Y = vec.y;
@@ -897,7 +1034,11 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void glPolygonOffset(float p1, float p2) {
-		_wglPolygonOffset(p1, p2);
+		if(p1 != polygonOffset1 || p2 != polygonOffset2) {
+			_wglPolygonOffset(p1, p2);
+			polygonOffset1 = p1;
+			polygonOffset2 = p2;
+		}
 	}
 
 	public static final void glCallLists(IntBuffer p1) {
@@ -1012,40 +1153,13 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	private static final void bindTheShader(int mode) {
 		FixedFunctionShader s = shader = FixedFunctionShader.instance(mode);
 		s.useProgram();
-		if (enableAlphaTest) {
-			s.setAlphaTest(alphaThresh);
-		}
-		s.setColor(colorR, colorG, colorB, colorA);
-		if (fogEnabled) {
-			s.setFogMode((fogPremultiply ? 2 : 0) + fogMode);
-			s.setFogColor(fogColorR, fogColorG, fogColorB, fogColorA);
-			s.setFogDensity(fogDensity);
-			s.setFogStartEnd(fogStart, fogEnd);
-		}
-		s.setModelMatrix(matModelV[matModelPointer]);
-		s.setProjectionMatrix(matProjV[matProjPointer]);
-		s.setTextureMatrix(matTexV[matTexPointer]);
-		if (enableColorMaterial && enableLighting) {
-			s.setNormal(normalX, normalY, normalZ);
-			s.setLightPositions(lightPos0vec, lightPos1vec);
-		}
-		s.setTex0Coords(tex0X, tex0Y);
-		s.setTex1Coords(tex1X, tex1Y);
-		if (enableTexGen) {
-			s.setTexGenS(texS_plane, texS_X, texS_Y, texS_Z, texS_W);
-			s.setTexGenT(texT_plane, texT_X, texT_Y, texT_Z, texT_W);
-			s.setTexGenR(texR_plane, texR_X, texR_Y, texR_Z, texR_W);
-			s.setTexGenQ(texQ_plane, texQ_X, texQ_Y, texQ_Z, texQ_W);
-		}
-		if (enableAnisotropicFix) {
-			s.setAnisotropicFix(anisotropicFixX, anisotropicFixY);
-		}
+		s.update();
 	}
 
 	public static final void drawHighPoly(HighPolyMesh msh) {
 		bindTheShader((msh.hasTexture ? (FixedFunctionShader.NORMAL | FixedFunctionShader.TEXTURE0)
 				: FixedFunctionShader.NORMAL) | getShaderModeFlag1());
-		_wglBindVertexArray(msh.vertexArray);
+		_wglBindVertexArray0(msh.vertexArray);
 		_wglDrawElements(_wGL_TRIANGLES, msh.indexCount, _wGL_UNSIGNED_SHORT, 0);
 		triangleDrawn += msh.indexCount / 3;
 		shader.unuseProgram();
@@ -1069,13 +1183,15 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 				System.err.println("only GL_QUADS supported in a display list");
 			}
 		} else {
-			bytesUploaded += _wArrayByteLength(buffer);
+			int bl =  _wArrayByteLength(buffer);
+			bytesUploaded += bl;
 			vertexDrawn += p3;
 
 			bindTheShader();
 
-			_wglBindVertexArray0(shader.genericArray);
-			_wglBindBuffer(_wGL_ARRAY_BUFFER, shader.genericBuffer);
+			StreamBufferInstance sb = shader.streamBuffer.getBuffer(bl);
+			_wglBindVertexArray0(sb.getVertexArray());
+			_wglBindBuffer(_wGL_ARRAY_BUFFER, sb.getVertexBuffer());
 			if (!shader.bufferIsInitialized) {
 				shader.bufferIsInitialized = true;
 				_wglBufferData(_wGL_ARRAY_BUFFER, blankUploadArray, _wGL_DYNAMIC_DRAW);
@@ -1202,7 +1318,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	}
 
-	private static final GLObjectMap<QueryGL> queryObjs = new GLObjectMap(256);
+	private static final GLObjectMap<QueryGL> queryObjs = new GLObjectMap<>(256);
 
 	public static final int glCreateQuery() {
 		return queryObjs.register(_wglCreateQuery());
@@ -1224,7 +1340,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 		if (occlusion_vao == null)
 			initializeOcclusionObjects();
 		_wglUseProgram(occlusion_program);
-		_wglBindVertexArray(occlusion_vao);
+		_wglBindVertexArray0(occlusion_vao);
 		if (!cachedOcclusionP.equals(matProjV[matProjPointer])) {
 			cachedOcclusionP.load(matProjV[matProjPointer]);
 			cachedOcclusionP.store(occlusionProj);
@@ -1259,7 +1375,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	public static final boolean glGetQueryResultAvailable(int obj) {
 		QueryGL q = queryObjs.get(obj);
-		return _wglGetQueryObjecti(q, _wGL_QUERY_RESULT_AVAILABLE) >= 0;
+		return _wglGetQueryObjecti(q, _wGL_QUERY_RESULT_AVAILABLE) > 0;
 	}
 
 	public static final int glGenTextures() {
@@ -1289,9 +1405,11 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 			switch (p2) {
 			default:
 			case GL_LINEAR:
+				++fogCfgSerial;
 				fogMode = 1;
 				break;
 			case GL_EXP:
+				++fogCfgSerial;
 				fogMode = 2;
 				break;
 			}
@@ -1301,12 +1419,15 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	public static final void glFogf(int p1, float p2) {
 		switch (p1) {
 		case GL_FOG_START:
+			++fogCfgSerial;
 			fogStart = p2;
 			break;
 		case GL_FOG_END:
+			++fogCfgSerial;
 			fogEnd = p2;
 			break;
 		case GL_FOG_DENSITY:
+			++fogCfgSerial;
 			fogDensity = p2;
 			break;
 		default:
@@ -1316,6 +1437,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 
 	public static final void glFog(int p1, FloatBuffer p2) {
 		if (p1 == GL_FOG_COLOR) {
+			++fogColorSerial;
 			fogColorR = p2.get();
 			fogColorG = p2.get();
 			fogColorB = p2.get();
@@ -1337,12 +1459,16 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	public static final void glActiveTexture(int p1) {
 		switch (p1) {
 		case GL_TEXTURE0:
-			selectedTex = 0;
-			_wglActiveTexture(_wGL_TEXTURE0);
+			if(selectedTex != 0) {
+				selectedTex = 0;
+				_wglActiveTexture(_wGL_TEXTURE0);
+			}
 			break;
 		case GL_TEXTURE1:
-			selectedTex = 1;
-			_wglActiveTexture(_wGL_TEXTURE1);
+			if(selectedTex != 1) {
+				selectedTex = 1;
+				_wglActiveTexture(_wGL_TEXTURE1);
+			}
 			break;
 		default:
 			System.err.println("only two texture units implemented");
@@ -1367,10 +1493,12 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	public static final void glMultiTexCoord2f(int p1, float p2, float p3) {
 		switch (p1) {
 		case GL_TEXTURE0:
+			++tex0Serial;
 			tex0X = p2;
 			tex0Y = p3;
 			break;
 		case GL_TEXTURE1:
+			++tex1Serial;
 			tex1X = p2;
 			tex1Y = p3;
 			break;
@@ -1399,7 +1527,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void gluPerspective(float fovy, float aspect, float zNear, float zFar) {
-		Matrix4f res = getMatrix();
+		Matrix4f res = getMatrixIncrSerial();
 		float cotangent = (float) Math.cos(fovy * toRad * 0.5f) / (float) Math.sin(fovy * toRad * 0.5f);
 		res.m00 = cotangent / aspect;
 		res.m01 = 0.0f;
@@ -1420,7 +1548,7 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 	}
 
 	public static final void gluPerspectiveFlat(float fovy, float aspect, float zNear, float zFar) {
-		Matrix4f res = getMatrix();
+		Matrix4f res = getMatrixIncrSerial();
 		float cotangent = (float) Math.cos(fovy * toRad * 0.5f) / (float) Math.sin(fovy * toRad * 0.5f);
 		res.m00 = cotangent / aspect;
 		res.m01 = 0.0f;
@@ -1457,12 +1585,16 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 		}
 	}
 
+	public static final void optimize() {
+		FixedFunctionShader.optimize();
+	}
+
 	private static long lastBandwidthReset = 0l;
 	private static int lastBandwidth = 0;
 
 	public static final int getBitsPerSecond() {
-		if (System.currentTimeMillis() - lastBandwidthReset > 1000) {
-			lastBandwidthReset = System.currentTimeMillis();
+		if (steadyTimeMillis() - lastBandwidthReset > 1000) {
+			lastBandwidthReset = steadyTimeMillis();
 			lastBandwidth = bytesUploaded * 8;
 			bytesUploaded = 0;
 		}
@@ -1479,6 +1611,43 @@ public class EaglerAdapterGL30 extends EaglerAdapterImpl2 {
 		int ret = triangleDrawn;
 		triangleDrawn = 0;
 		return ret;
+	}
+
+	public static boolean sync(int limitFramerate, long[] timerPtr) {
+		boolean limitFPS = limitFramerate > 0 && limitFramerate <= 1000;
+		boolean blocked = false;
+		
+		if(limitFPS) {
+			long frameMillis = (1000l / limitFramerate);
+			if(timerPtr[0] == 0l) {
+				timerPtr[0] = steadyTimeMillis() + frameMillis;
+			}else {
+				long millis = steadyTimeMillis();
+				long remaining = timerPtr[0] - millis;
+				if(remaining > 0) {
+					if(isWebGL && immediateContinueSupported()) {
+						immediateContinue(); // cannot stack setTimeouts, or it will throttle
+						millis = steadyTimeMillis();
+						remaining = timerPtr[0] - millis;
+						if(remaining > 0) {
+							sleep((int)remaining);
+							millis = steadyTimeMillis();
+						}
+					}else {
+						sleep((int)remaining);
+						millis = steadyTimeMillis();
+					}
+					blocked = true;
+				}
+				if((timerPtr[0] += frameMillis) < millis) {
+					timerPtr[0] = millis;
+				}
+			}
+		}else {
+			timerPtr[0] = 0l;
+		}
+		
+		return blocked;
 	}
 
 }

@@ -10,7 +10,7 @@ public class IPacket01ICEServers extends IPacket {
 	public final Collection<ICEServerSet.RelayServer> servers;
 	
 	public IPacket01ICEServers() {
-		servers = new ArrayList();
+		servers = new ArrayList<>();
 	}
 	
 	public void read(DataInputStream input) throws IOException {

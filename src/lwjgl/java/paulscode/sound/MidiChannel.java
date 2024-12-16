@@ -17,6 +17,8 @@ import javax.sound.midi.Sequencer;
 import javax.sound.midi.ShortMessage;
 import javax.sound.midi.Synthesizer;
 
+import net.lax1dude.eaglercraft.EaglerAdapter;
+
 /**
  * The MidiChannel class provides an interface for playing MIDI files, using 
  * the JavaSound API.  For more information about the JavaSound API, visit 
@@ -422,7 +424,7 @@ public class MidiChannel implements MetaEventListener
         fadeOutMilis = milis;
         fadeInMilis = 0;
         fadeOutGain = 1.0f;
-        lastFadeCheck = System.currentTimeMillis();
+        lastFadeCheck = EaglerAdapter.steadyTimeMillis();
 
         synchronized( sequenceQueueLock )
         {
@@ -474,7 +476,7 @@ public class MidiChannel implements MetaEventListener
         fadeOutMilis = milisOut;
         fadeInMilis = milisIn;
         fadeOutGain = 1.0f;
-        lastFadeCheck = System.currentTimeMillis();
+        lastFadeCheck = EaglerAdapter.steadyTimeMillis();
 
         synchronized( sequenceQueueLock )
         {
@@ -503,7 +505,7 @@ public class MidiChannel implements MetaEventListener
         if( fadeOutGain == -1.0f && fadeInGain == 1.0f )
             return false;
 
-        long currentTime = System.currentTimeMillis();
+        long currentTime = EaglerAdapter.steadyTimeMillis();
         long milisPast = currentTime - lastFadeCheck;
         lastFadeCheck = currentTime;
 

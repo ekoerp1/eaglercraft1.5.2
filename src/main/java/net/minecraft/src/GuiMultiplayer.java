@@ -1,8 +1,5 @@
 package net.minecraft.src;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import net.lax1dude.eaglercraft.ConfigConstants;
 import net.lax1dude.eaglercraft.EaglerAdapter;
 import net.lax1dude.eaglercraft.GuiNetworkSettingsButton;
@@ -81,7 +78,7 @@ public class GuiMultiplayer extends GuiScreen {
 	
 	public static void tickRefreshCooldown() {
 		if(cooldownTimer > 0) {
-			long t = System.currentTimeMillis();
+			long t = EaglerAdapter.steadyTimeMillis();
 			if(t - lastCooldown > 5000l) {
 				--cooldownTimer;
 				lastCooldown = t;
@@ -90,7 +87,7 @@ public class GuiMultiplayer extends GuiScreen {
 	}
 	
 	private static boolean testIfCanRefresh() {
-		long t = System.currentTimeMillis();
+		long t = EaglerAdapter.steadyTimeMillis();
 		if(t - lastRefresh > 1000l) {
 			lastRefresh = t;
 			if(cooldownTimer < 8) {

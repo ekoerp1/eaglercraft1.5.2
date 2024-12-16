@@ -1,6 +1,5 @@
 package net.lax1dude.eaglercraft;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -52,7 +51,7 @@ public class WorkerNetworkManager implements INetworkManager {
 		while((ipcPacket = EaglerAdapter.recieveFromIntegratedServer("NET|" + ipcChannel)) != null) {
 			byte[] bytes = ipcPacket.data;
 			try {
-				ByteArrayInputStream bai = new ByteArrayInputStream(bytes);
+				EaglerInputStream bai = new EaglerInputStream(bytes);
 				int pktId = bai.read();
 				
 				if(pktId == -1) {

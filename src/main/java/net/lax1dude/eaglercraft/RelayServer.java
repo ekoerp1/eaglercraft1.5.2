@@ -63,10 +63,7 @@ public class RelayServer {
 	public void pingBlocking() {
 		ping();
 		while(getPing() < 0l) {
-			try {
-				Thread.sleep(250l);
-			}catch(InterruptedException ex) {
-			}
+			EaglerAdapter.sleep(250);
 			update();
 		}
 	}
@@ -97,7 +94,7 @@ public class RelayServer {
 				queriedCompatible = query.getCompatible();
 				workingPing = ping;
 			}
-			lastPing = System.currentTimeMillis();
+			lastPing = EaglerAdapter.steadyTimeMillis();
 			query = null;
 		}
 	}

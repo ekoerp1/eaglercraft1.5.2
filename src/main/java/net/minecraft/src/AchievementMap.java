@@ -3,7 +3,8 @@ package net.minecraft.src;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.lax1dude.eaglercraft.EaglerAdapter;
+import net.lax1dude.eaglercraft.EaglerMisc;
+import net.minecraft.client.Minecraft;
 
 public class AchievementMap {
 	/** Holds the singleton instance of AchievementMap. */
@@ -14,7 +15,8 @@ public class AchievementMap {
 
 	private AchievementMap() {
 		try {
-			for(String str : EaglerAdapter.fileContentsLines("/achievement/map.txt")) {
+			String[] strs = EaglerMisc.bytesToLines(Minecraft.getMinecraft().texturePackList.getSelectedTexturePack().getResourceAsBytes("/achievement/map.txt"));
+			for(String str : strs) {
 				String[] var3 = str.split(",");
 				int var4 = Integer.parseInt(var3[0]);
 				this.guidMap.put(Integer.valueOf(var4), var3[1]);

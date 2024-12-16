@@ -33,6 +33,6 @@ public class TextureLocation {
 		r.bindTexture(glObject);
 	}
 	
-	private static final ArrayList<TextureLocation> locations = new ArrayList();
+	private static final ArrayList<TextureLocation> locations = new ArrayList<>();
 
 }

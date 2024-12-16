@@ -137,7 +137,7 @@ public class LoadingScreenRenderer implements IProgressUpdate {
 
 				this.mc.fontRenderer.drawStringWithShadow(this.currentlyDisplayedText, (var5 - this.mc.fontRenderer.getStringWidth(this.currentlyDisplayedText)) / 2, var6 / 2 - 4 - 16, 16777215);
 				this.mc.fontRenderer.drawStringWithShadow(this.field_73727_a, (var5 - this.mc.fontRenderer.getStringWidth(this.field_73727_a)) / 2, var6 / 2 - 4 + 8, 16777215);
-				EaglerAdapter.updateDisplay();
+				this.mc.updateDisplay();
 			}
 		}
 	}

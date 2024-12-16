@@ -14,7 +14,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -72,6 +71,7 @@ import org.lwjgl.util.glu.GLU;
 import de.cuina.fireandfuel.CodecJLayerMP3;
 import net.lax1dude.eaglercraft.AssetRepository;
 import net.lax1dude.eaglercraft.EaglerImage;
+import net.lax1dude.eaglercraft.EaglerInputStream;
 import net.lax1dude.eaglercraft.EarlyLoadScreen;
 import net.lax1dude.eaglercraft.LANPeerEvent;
 import net.lax1dude.eaglercraft.PKT;
@@ -81,8 +81,6 @@ import net.lax1dude.eaglercraft.RelayQuery.VersionMismatch;
 import net.lax1dude.eaglercraft.RelayWorldsQuery;
 import net.lax1dude.eaglercraft.ServerQuery;
 import net.lax1dude.eaglercraft.Voice;
-import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.ProgramGL;
-import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.RateLimit;
 import net.lax1dude.eaglercraft.adapter.lwjgl.GameWindowListener;
 import net.lax1dude.eaglercraft.sp.relay.pkt.IPacket;
 import net.lax1dude.eaglercraft.sp.relay.pkt.IPacket07LocalWorlds.LocalWorld;
@@ -106,7 +104,7 @@ public class EaglerAdapterImpl2 {
 	public static final InputStream loadResource(String path) {
 		byte[] file = loadResourceBytes(path);
 		if (file != null) {
-			return new ByteArrayInputStream(file);
+			return new EaglerInputStream(file);
 		} else {
 			return null;
 		}
@@ -228,6 +226,7 @@ public class EaglerAdapterImpl2 {
 	public static final int _wGL_ELEMENT_ARRAY_BUFFER = GL15.GL_ELEMENT_ARRAY_BUFFER;
 	public static final int _wGL_STATIC_DRAW = GL15.GL_STATIC_DRAW;
 	public static final int _wGL_DYNAMIC_DRAW = GL15.GL_DYNAMIC_DRAW;
+	public static final int _wGL_STREAM_DRAW = GL15.GL_STREAM_DRAW;
 	public static final int _wGL_INVALID_ENUM = GL11.GL_INVALID_ENUM;
 	public static final int _wGL_INVALID_VALUE= GL11.GL_INVALID_VALUE;
 	public static final int _wGL_INVALID_OPERATION = GL11.GL_INVALID_OPERATION;
@@ -356,9 +355,11 @@ public class EaglerAdapterImpl2 {
 	public static final void _wglTexImage2D(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, ByteBuffer p9) {
 		GL11.glTexImage2D(p1, p2, p3, p4, p5, p6, p7, p8, p9);
 	}
-
 	public static final void _wglBlendFunc(int p1, int p2) {
 		GL11.glBlendFunc(p1, p2);
+	}
+	public static final void _wglBlendFuncSeparate(int p1, int p2, int p3, int p4) {
+		GL14.glBlendFuncSeparate(p1, p2, p3, p4);
 	}
 	public static final void _wglBlendColor(float r, float g, float b, float a) {
 		GL14.glBlendColor(r, g, b, a);
@@ -479,6 +480,9 @@ public class EaglerAdapterImpl2 {
 	}
 	public static final void _wglBufferData0(int p1, IntBuffer p2, int p3) {
 		GL15.glBufferData(p1, p2, p3);
+	}
+	public static final void _wglBufferData00(int p1, long len, int p3) {
+		GL15.glBufferData(p1, len, p3);
 	}
 	public static final void _wglBufferSubData0(int p1, int p2, IntBuffer p3) {
 		GL15.glBufferSubData(p1, p2, p3);
@@ -634,7 +638,7 @@ public class EaglerAdapterImpl2 {
 	
 	public static final EaglerImage loadPNG(byte[] data) {
 		try {
-			BufferedImage img = ImageIO.read(new ByteArrayInputStream(data));
+			BufferedImage img = ImageIO.read(new EaglerInputStream(data));
 			int[] pxls = img.getRGB(0, 0, img.getWidth(), img.getHeight(), null, 0, img.getWidth());
 			return new EaglerImage(pxls, img.getWidth(), img.getHeight(), true);
 		} catch (IOException e) {
@@ -965,12 +969,16 @@ public class EaglerAdapterImpl2 {
 	public static final boolean shouldShutdown() {
 		return Display.isCloseRequested();
 	}
-	public static final void updateDisplay() {
-		Display.update();
+	public static final void updateDisplay(int fpsLimit, boolean vsync) {
+		if(vsync) {
+			Display.setVSyncEnabled(true);
+			Display.update();
+		}else {
+			Display.setVSyncEnabled(false);
+			Display.sync(fpsLimit);
+			Display.update();
+		}
 	}
-	public static final void setVSyncEnabled(boolean p1) {
-		Display.setVSyncEnabled(p1);
-	} 
 	public static final void enableRepeatEvents(boolean b) {
 		Keyboard.enableRepeatEvents(b);
 	}
@@ -999,17 +1007,14 @@ public class EaglerAdapterImpl2 {
 			e.printStackTrace();
 		}
 	}
-	public static final void syncDisplay(int performanceToFps) {
-		Display.sync(performanceToFps);
-	}
 
-	private static final Set<String> rateLimitedAddresses = new HashSet();
-	private static final Set<String> blockedAddresses = new HashSet();
+	private static final Set<String> rateLimitedAddresses = new HashSet<>();
+	private static final Set<String> blockedAddresses = new HashSet<>();
 	
 	private static WebSocketClient clientSocket = null;
 	private static final Object socketSync = new Object();
 	
-	private static LinkedList<byte[]> readPackets = new LinkedList();
+	private static LinkedList<byte[]> readPackets = new LinkedList<>();
 	
 	private static class EaglerSocketClient extends WebSocketClient {
 		
@@ -1219,16 +1224,22 @@ public class EaglerAdapterImpl2 {
 						yee.setDialogTitle("select a file");
 						yee.setFileSelectionMode(JFileChooser.FILES_ONLY);
 						yee.setMultiSelectionEnabled(false);
+
+						String[] exts = ext.split(",.");
 						yee.setFileFilter(new FileFilter() {
 							
 							@Override
 							public String getDescription() {
-								return ext+" files";
+								return String.join("/", exts)+" files";
 							}
 							
 							@Override
 							public boolean accept(File f) {
-								return f.isDirectory() || f.getName().endsWith("."+ext);
+								if (f.isDirectory()) return true;
+								for (String e : exts) {
+									if (f.getName().endsWith("."+e)) return true;
+								}
+								return false;
 							}
 						});
 						if(yee.showOpenDialog(eagler) == JFileChooser.APPROVE_OPTION) {
@@ -1453,7 +1464,7 @@ public class EaglerAdapterImpl2 {
 	public static final float getVoiceSpeakVolume() {
 		return volumeSpeak;
 	}
-	private static final Set<String> emptySet = new HashSet();
+	private static final Set<String> emptySet = new HashSet<>();
 	public static final Set<String> getVoiceListening() {
 		return emptySet;
 	}
@@ -1466,7 +1477,7 @@ public class EaglerAdapterImpl2 {
 	public static final Set<String> getVoiceMuted() {
 		return emptySet;
 	}
-	private static final List<String> emptyList = new ArrayList();
+	private static final List<String> emptyList = new ArrayList<>();
 	public static final List<String> getVoiceRecent() {
 		return emptyList;
 	}
@@ -1534,8 +1545,8 @@ public class EaglerAdapterImpl2 {
 	
 	private static class ServerQueryImpl extends WebSocketClient implements ServerQuery {
 		
-		private final LinkedList<QueryResponse> queryResponses = new LinkedList();
-		private final LinkedList<byte[]> queryResponsesBytes = new LinkedList();
+		private final LinkedList<QueryResponse> queryResponses = new LinkedList<>();
+		private final LinkedList<byte[]> queryResponsesBytes = new LinkedList<>();
 		private final String type;
 		private boolean open;
 		private boolean alive;
@@ -1610,7 +1621,7 @@ public class EaglerAdapterImpl2 {
 			this.alive = true;
 			synchronized(queryResponses) {
 				if(pingTimer == -1) {
-					pingTimer = System.currentTimeMillis() - pingStart;
+					pingTimer = steadyTimeMillis() - pingStart;
 				}
 				if(arg0.equalsIgnoreCase("BLOCKED")) {
 					synchronized(socketSync) {
@@ -1660,7 +1671,7 @@ public class EaglerAdapterImpl2 {
 		@Override
 		public void onOpen(ServerHandshake arg0) {
 			send("Accept: " + type);
-			pingStart = System.currentTimeMillis();
+			pingStart = steadyTimeMillis();
 		}
 
 		@Override
@@ -1983,5 +1994,32 @@ public class EaglerAdapterImpl2 {
 	public static final byte[] downloadURL(String url) {
 		return null;
 	}
-	
+
+	public static final long steadyTimeMillis() {
+		return System.nanoTime() / 1000000l;
+	}
+
+	public static final long nanoTime() {
+		return System.nanoTime();
+	}
+
+	public static final void sleep(int millis) {
+		try {
+			Thread.sleep(millis);
+		}catch(InterruptedException ex) {
+		}
+	}
+
+	public static final boolean immediateContinueSupported() {
+		return false;
+	}
+
+	public static final void immediateContinue() {
+		//
+	}
+
+	public static final List<LANPeerEvent> serverLANGetAllEvent(String clientId) {
+		return null;
+	}
+
 }

@@ -1,5 +1,7 @@
 package paulscode.sound;
 
+import net.lax1dude.eaglercraft.EaglerAdapter;
+
 /**
  * The CommandThread class is designed to move all command processing into a
  * single thread to be run in the background and avoid conflicts between
@@ -99,7 +101,7 @@ public class CommandThread extends SimpleThread
     @Override
     public void run()
     {
-        long previousTime = System.currentTimeMillis();
+        long previousTime = EaglerAdapter.steadyTimeMillis();
         long currentTime = previousTime;
         
         if( soundSystem == null )
@@ -121,7 +123,7 @@ public class CommandThread extends SimpleThread
             soundSystem.CommandQueue( null );
             
             // Remove temporary sources every ten seconds:
-            currentTime = System.currentTimeMillis();
+            currentTime = EaglerAdapter.steadyTimeMillis();
             if( (!dying()) && ((currentTime - previousTime) > 10000) )
             {
                 previousTime = currentTime;

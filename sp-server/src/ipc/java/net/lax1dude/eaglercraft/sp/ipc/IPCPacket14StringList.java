@@ -19,11 +19,11 @@ public class IPCPacket14StringList implements IPCPacketBase {
 	public final List<String> stringList;
 	
 	public IPCPacket14StringList() {
-		stringList = new ArrayList();
+		stringList = new ArrayList<>();
 	}
 	
 	public IPCPacket14StringList(int opcode, String[] list) {
-		stringList = new ArrayList();
+		stringList = new ArrayList<>();
 		for(String s : list) {
 			s = s.trim();
 			if(s.length() > 0) {
@@ -34,7 +34,7 @@ public class IPCPacket14StringList implements IPCPacketBase {
 	}
 	
 	public IPCPacket14StringList(int opcode, List<String> list) {
-		stringList = new ArrayList();
+		stringList = new ArrayList<>();
 		for(String s : list) {
 			s = s.trim();
 			if(s.length() > 0) {

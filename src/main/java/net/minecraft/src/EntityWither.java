@@ -27,11 +27,11 @@ public class EntityWither extends EntityMob implements IBossDisplayData, IRanged
 
 	protected void entityInit() {
 		super.entityInit();
-		this.dataWatcher.addObject(16, new Integer(100));
-		this.dataWatcher.addObject(17, new Integer(0));
-		this.dataWatcher.addObject(18, new Integer(0));
-		this.dataWatcher.addObject(19, new Integer(0));
-		this.dataWatcher.addObject(20, new Integer(0));
+		this.dataWatcher.addObject(16, Integer.valueOf(100));
+		this.dataWatcher.addObject(17, Integer.valueOf(0));
+		this.dataWatcher.addObject(18, Integer.valueOf(0));
+		this.dataWatcher.addObject(19, Integer.valueOf(0));
+		this.dataWatcher.addObject(20, Integer.valueOf(0));
 	}
 
 	/**

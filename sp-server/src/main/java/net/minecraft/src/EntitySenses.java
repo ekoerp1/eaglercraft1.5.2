@@ -34,9 +34,7 @@ public class EntitySenses {
 		} else if (this.unseenEntities.contains(par1Entity)) {
 			return false;
 		} else {
-			this.entityObj.worldObj.theProfiler.startSection("canSee");
 			boolean var2 = this.entityObj.canEntityBeSeen(par1Entity);
-			this.entityObj.worldObj.theProfiler.endSection();
 
 			if (var2) {
 				this.seenEntities.add(par1Entity);

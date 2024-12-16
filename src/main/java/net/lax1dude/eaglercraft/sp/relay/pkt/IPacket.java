@@ -11,8 +11,8 @@ import java.util.Map;
 
 public class IPacket {
 
-	private static final Map<Integer,Class<? extends IPacket>> definedPacketClasses = new HashMap();
-	private static final Map<Class<? extends IPacket>,Integer> definedPacketIds = new HashMap();
+	private static final Map<Integer,Class<? extends IPacket>> definedPacketClasses = new HashMap<>();
+	private static final Map<Class<? extends IPacket>,Integer> definedPacketIds = new HashMap<>();
 	
 	private static void register(int id, Class<? extends IPacket> clazz) {
 		definedPacketClasses.put(id, clazz);

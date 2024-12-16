@@ -292,7 +292,6 @@ public class Chunk {
 	 * Runs delayed skylight updates.
 	 */
 	private void updateSkylight_do() {
-		this.worldObj.theProfiler.startSection("recheckGaps");
 
 		if (this.worldObj.doChunksNearChunkExist(this.xPosition * 16 + 8, 0, this.zPosition * 16 + 8, 16)) {
 			for (int var1 = 0; var1 < 16; ++var1) {
@@ -330,8 +329,6 @@ public class Chunk {
 
 			this.isGapLightingUpdated = false;
 		}
-
-		this.worldObj.theProfiler.endSection();
 	}
 
 	/**

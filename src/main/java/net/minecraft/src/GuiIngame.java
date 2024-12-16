@@ -10,7 +10,6 @@ import net.lax1dude.eaglercraft.EnumBrowser;
 import net.lax1dude.eaglercraft.IntegratedServer;
 import net.lax1dude.eaglercraft.TextureLocation;
 import net.lax1dude.eaglercraft.adapter.Tessellator;
-import net.lax1dude.eaglercraft.glemu.EffectPipeline;
 import net.minecraft.client.Minecraft;
 
 public class GuiIngame extends Gui {
@@ -59,12 +58,7 @@ public class GuiIngame extends Gui {
 		FontRenderer var8 = this.mc.fontRenderer;
 		this.mc.entityRenderer.setupOverlayRendering();
 		EaglerAdapter.glEnable(EaglerAdapter.GL_BLEND);
-
-		if (Minecraft.isFancyGraphicsEnabled()) {
-			this.renderVignette(this.mc.thePlayer.getBrightness(par1), var6, var7);
-		} else {
-			EaglerAdapter.glBlendFunc(EaglerAdapter.GL_SRC_ALPHA, EaglerAdapter.GL_ONE_MINUS_SRC_ALPHA);
-		}
+		EaglerAdapter.glBlendFunc(EaglerAdapter.GL_SRC_ALPHA, EaglerAdapter.GL_ONE_MINUS_SRC_ALPHA);
 
 		ItemStack var9 = this.mc.thePlayer.inventory.armorItemInSlot(3);
 
@@ -102,29 +96,9 @@ public class GuiIngame extends Gui {
 			this.zLevel = -90.0F;
 			this.drawTexturedModalRect(var6 / 2 - 91, var7 - 22, 0, 0, 182, 22);
 			this.drawTexturedModalRect(var6 / 2 - 91 - 1 + var31.currentItem * 20, var7 - 22 - 1, 0, 22, 24, 22);
+
 			tex_icons.bindTexture();
 			EaglerAdapter.glEnable(EaglerAdapter.GL_BLEND);
-			EaglerAdapter.glBlendFunc(EaglerAdapter.GL_ONE_MINUS_DST_COLOR, EaglerAdapter.GL_ONE_MINUS_SRC_COLOR);
-
-			float i = mc.entityRenderer.startup / 900.0f - 0.5f;
-			if(i > 1.0f) i = 1.0f;
-			if(i < 0.0f) i = 0.0f;
-			float i2 = i * i;
-			if(i2 > 0.0f) {
-				float f = (float)((System.currentTimeMillis() % 1000000l) * 0.0002);
-				f += MathHelper.sin(f * 5.0f) * 0.2f;
-				i2 *= MathHelper.sin(f) + MathHelper.sin(f * 1.5f + 0.6f) + MathHelper.sin(f * 0.7f + 1.7f) +
-						MathHelper.sin(f * 3.0f + 3.0f);
-				EaglerAdapter.glPushMatrix();
-				EaglerAdapter.glTranslatef(var6 / 2, var7 / 2, 0.0f);
-				EaglerAdapter.glRotatef(i2 * 5.0f, 0.0f, 0.0f, 1.0f);
-				this.drawTexturedModalRect(-7, -7, 0, 0, 16, 16);
-				EaglerAdapter.glPopMatrix();
-			}else {
-				this.drawTexturedModalRect(var6 / 2 - 7, var7 / 2 - 7, 0, 0, 16, 16);
-			}
-			
-			EaglerAdapter.glDisable(EaglerAdapter.GL_BLEND);
 			var11 = this.mc.thePlayer.hurtResistantTime / 3 % 2 == 1;
 
 			if (this.mc.thePlayer.hurtResistantTime < 10) {
@@ -138,15 +112,12 @@ public class GuiIngame extends Gui {
 			FoodStats var15 = this.mc.thePlayer.getFoodStats();
 			var16 = var15.getFoodLevel();
 			var17 = var15.getPrevFoodLevel();
-			this.mc.mcProfiler.startSection("bossHealth");
 			this.renderBossHealth();
-			this.mc.mcProfiler.endSection();
 			int var19;
 
 			if (this.mc.playerController.shouldDrawHUD()) {
 				var18 = var6 / 2 - 91;
 				var19 = var6 / 2 + 91;
-				this.mc.mcProfiler.startSection("expBar");
 				var20 = this.mc.thePlayer.xpBarCap();
 
 				if (var20 > 0) {
@@ -169,7 +140,6 @@ public class GuiIngame extends Gui {
 					var24 = this.updateCounter % 25;
 				}
 
-				this.mc.mcProfiler.endStartSection("healthArmor");
 				int var25;
 				int var28;
 				int var29;
@@ -243,8 +213,6 @@ public class GuiIngame extends Gui {
 					}
 				}
 
-				this.mc.mcProfiler.endStartSection("food");
-
 				for (var25 = 0; var25 < 10; ++var25) {
 					var26 = var47;
 					var52 = 16;
@@ -285,8 +253,6 @@ public class GuiIngame extends Gui {
 					}
 				}
 
-				this.mc.mcProfiler.endStartSection("air");
-
 				if (this.mc.thePlayer.isInsideOfMaterial(Material.water)) {
 					var25 = this.mc.thePlayer.getAir();
 					var26 = MathHelper.ceiling_double_int((double) (var25 - 2) * 10.0D / 300.0D);
@@ -300,12 +266,9 @@ public class GuiIngame extends Gui {
 						}
 					}
 				}
-
-				this.mc.mcProfiler.endSection();
 			}
 
 			EaglerAdapter.glDisable(EaglerAdapter.GL_BLEND);
-			this.mc.mcProfiler.startSection("actionBar");
 			EaglerAdapter.glEnable(EaglerAdapter.GL_RESCALE_NORMAL);
 			RenderHelper.enableGUIStandardItemLighting2();
 
@@ -317,13 +280,11 @@ public class GuiIngame extends Gui {
 
 			RenderHelper.disableStandardItemLighting();
 			EaglerAdapter.glDisable(EaglerAdapter.GL_RESCALE_NORMAL);
-			this.mc.mcProfiler.endSection();
 		}
 
 		float var33;
 
 		if (this.mc.thePlayer.getSleepTimer() > 0) {
-			this.mc.mcProfiler.startSection("sleep");
 			EaglerAdapter.glDisable(EaglerAdapter.GL_DEPTH_TEST);
 			EaglerAdapter.glDisable(EaglerAdapter.GL_ALPHA_TEST);
 			int var32 = this.mc.thePlayer.getSleepTimer();
@@ -337,14 +298,12 @@ public class GuiIngame extends Gui {
 			drawRect(0, 0, var6, var7, var12);
 			EaglerAdapter.glEnable(EaglerAdapter.GL_ALPHA_TEST);
 			EaglerAdapter.glEnable(EaglerAdapter.GL_DEPTH_TEST);
-			this.mc.mcProfiler.endSection();
 		}
 
 		int var36;
 		int var40;
 
 		if (this.mc.playerController.func_78763_f() && this.mc.thePlayer.experienceLevel > 0) {
-			this.mc.mcProfiler.startSection("expLevel");
 			var11 = false;
 			var12 = var11 ? 16777215 : 8453920;
 			String var34 = "" + this.mc.thePlayer.experienceLevel;
@@ -355,14 +314,11 @@ public class GuiIngame extends Gui {
 			var8.drawString(var34, var36, var40 + 1, 0);
 			var8.drawString(var34, var36, var40 - 1, 0);
 			var8.drawString(var34, var36, var40, var12);
-			this.mc.mcProfiler.endSection();
 		}
 
 		String var35;
 
 		if (this.mc.gameSettings.heldItemTooltips) {
-			this.mc.mcProfiler.startSection("toolHighlight");
-
 			if (this.remainingHighlightTicks > 0 && this.highlightingItemStack != null) {
 				var35 = this.highlightingItemStack.getDisplayName();
 				var12 = (var6 - var8.getStringWidth(var35)) / 2;
@@ -387,12 +343,9 @@ public class GuiIngame extends Gui {
 					EaglerAdapter.glPopMatrix();
 				}
 			}
-
-			this.mc.mcProfiler.endSection();
 		}
 
 		if (this.mc.isDemo()) {
-			this.mc.mcProfiler.startSection("demo");
 			var35 = "";
 
 			if (this.mc.theWorld.getTotalWorldTime() >= 120500L) {
@@ -403,13 +356,11 @@ public class GuiIngame extends Gui {
 
 			var12 = var8.getStringWidth(var35);
 			var8.drawStringWithShadow(var35, var6 - var12 - 10, 5, 16777215);
-			this.mc.mcProfiler.endSection();
 		}
 		
 		this.mc.debug = "" + Minecraft.debugFPS + " fps, " + Minecraft.debugChunkUpdates + " chunk updates";
 
 		if (this.mc.gameSettings.showDebugInfo) {
-			this.mc.mcProfiler.startSection("debug");
 			EaglerAdapter.glPushMatrix();
 			var8.drawStringWithShadow("minecraft 1.5.2 (" + this.mc.debug + ")", 2, 2, 16777215);
 			var8.drawStringWithShadow(this.mc.debugInfoRenders(), 2, 12, 16777215);
@@ -476,7 +427,6 @@ public class GuiIngame extends Gui {
 			var45 = "/glsl/occl.glsl";
 			this.drawString(var8, var45, var6 - var8.getStringWidth(var45) - 2, offset + 120, 14737632);
 			EaglerAdapter.glPopMatrix();
-			this.mc.mcProfiler.endSection();
 		}else {
 			EaglerAdapter.glPushMatrix();
 			EaglerAdapter.glScalef(0.75f, 0.75f, 0.75f);
@@ -508,7 +458,6 @@ public class GuiIngame extends Gui {
 		}
 
 		if (this.recordPlayingUpFor > 0) {
-			this.mc.mcProfiler.startSection("overlayMessage");
 			var33 = (float) this.recordPlayingUpFor - par1;
 			var12 = (int) (var33 * 256.0F / 20.0F);
 
@@ -533,8 +482,6 @@ public class GuiIngame extends Gui {
 				EaglerAdapter.glDisable(EaglerAdapter.GL_BLEND);
 				EaglerAdapter.glPopMatrix();
 			}
-
-			this.mc.mcProfiler.endSection();
 		}
 
 		ScoreObjective var42 = this.mc.theWorld.getScoreboard().func_96539_a(1);
@@ -548,14 +495,11 @@ public class GuiIngame extends Gui {
 		EaglerAdapter.glDisable(EaglerAdapter.GL_ALPHA_TEST);
 		EaglerAdapter.glPushMatrix();
 		EaglerAdapter.glTranslatef(0.0F, (float) (var7 - 48), 0.0F);
-		this.mc.mcProfiler.startSection("chat");
 		this.persistantChatGUI.drawChat(this.updateCounter);
-		this.mc.mcProfiler.endSection();
 		EaglerAdapter.glPopMatrix();
 		var42 = this.mc.theWorld.getScoreboard().func_96539_a(0);
 
 		if (this.mc.gameSettings.keyBindPlayerList.pressed && (!this.mc.isIntegratedServerRunning() || this.mc.thePlayer.sendQueue.playerInfoList.size() > 1 || var42 != null)) {
-			this.mc.mcProfiler.startSection("playerList");
 			NetClientHandler var38 = this.mc.thePlayer.sendQueue;
 			List var43 = var38.playerInfoList;
 			var36 = var38.currentServerMaxPlayers;
@@ -669,14 +613,14 @@ public class GuiIngame extends Gui {
 				int var19 = var23 - var12 * par4FontRenderer.FONT_HEIGHT;
 				int var20 = par3 - var24 + 2;
 				drawRect(var25 - 2, var19, var20, var19 + par4FontRenderer.FONT_HEIGHT, 1342177280);
-				par4FontRenderer.drawString(var16, var25, var19, 553648127);
-				par4FontRenderer.drawString(var17, var20 - par4FontRenderer.getStringWidth(var17), var19, 553648127);
+				par4FontRenderer.drawString(var16, var25, var19, 0xFFFFFFFF);
+				par4FontRenderer.drawString(var17, var20 - par4FontRenderer.getStringWidth(var17), var19, 0xFFFFFFFF);
 
 				if (var12 == var6.size()) {
 					String var21 = par1ScoreObjective.getDisplayName();
 					drawRect(var25 - 2, var19 - par4FontRenderer.FONT_HEIGHT - 1, var20, var19 - 1, 1610612736);
 					drawRect(var25 - 2, var19 - 1, var20, var19, 1342177280);
-					par4FontRenderer.drawString(var21, var25 + var7 / 2 - par4FontRenderer.getStringWidth(var21) / 2, var19 - par4FontRenderer.FONT_HEIGHT, 553648127);
+					par4FontRenderer.drawString(var21, var25 + var7 / 2 - par4FontRenderer.getStringWidth(var21) / 2, var19 - par4FontRenderer.FONT_HEIGHT, 0xFFFFFFFF);
 				}
 			}
 		}
@@ -732,7 +676,7 @@ public class GuiIngame extends Gui {
 	/**
 	 * Renders the vignette. Args: vignetteBrightness, width, height
 	 */
-	private void renderVignette(float par1, int par2, int par3) {
+	public void renderVignette(float par1, int par2, int par3) {
 		par1 = 1.0F - par1 * 0.5f;
 
 		if (par1 < 0.0F) {
@@ -760,6 +704,33 @@ public class GuiIngame extends Gui {
 		EaglerAdapter.glEnable(EaglerAdapter.GL_DEPTH_TEST);
 		EaglerAdapter.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		EaglerAdapter.glBlendFunc(EaglerAdapter.GL_SRC_ALPHA, EaglerAdapter.GL_ONE_MINUS_SRC_ALPHA);
+	}
+
+	public void renderCrosshairs(int w, int h) {
+		tex_icons.bindTexture();
+		EaglerAdapter.glEnable(EaglerAdapter.GL_TEXTURE_2D);
+		EaglerAdapter.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		EaglerAdapter.glEnable(EaglerAdapter.GL_BLEND);
+		EaglerAdapter.glBlendFunc(EaglerAdapter.GL_ONE_MINUS_DST_COLOR, EaglerAdapter.GL_ONE_MINUS_SRC_COLOR);
+
+		float i = mc.entityRenderer.startup / 900.0f - 0.5f;
+		if(i > 1.0f) i = 1.0f;
+		if(i < 0.0f) i = 0.0f;
+		float i2 = i * i;
+		if(i2 > 0.0f) {
+			float f = (float)((EaglerAdapter.steadyTimeMillis() % 1000000l) * 0.0002);
+			f += MathHelper.sin(f * 5.0f) * 0.2f;
+			i2 *= MathHelper.sin(f) + MathHelper.sin(f * 1.5f + 0.6f) + MathHelper.sin(f * 0.7f + 1.7f) +
+					MathHelper.sin(f * 3.0f + 3.0f);
+			EaglerAdapter.glPushMatrix();
+			EaglerAdapter.glTranslatef(w / 2, h / 2, 0.0f);
+			EaglerAdapter.glRotatef(i2 * 5.0f, 0.0f, 0.0f, 1.0f);
+			this.drawTexturedModalRect(-7, -7, 0, 0, 16, 16);
+			EaglerAdapter.glPopMatrix();
+		}else {
+			this.drawTexturedModalRect(w / 2 - 7, h / 2 - 7, 0, 0, 16, 16);
+		}
+		
 	}
 
 	/**

@@ -33,8 +33,8 @@ public class WorldClient extends World {
 	private final Set previousActiveChunkSet = new HashSet();
 	public int ghostEntityId = Integer.MAX_VALUE;
 
-	public WorldClient(NetClientHandler par1NetClientHandler, WorldSettings par2WorldSettings, int par3, int par4, Profiler par5Profiler) {
-		super("MpServer", WorldProvider.getProviderForDimension(par3), par2WorldSettings, par5Profiler);
+	public WorldClient(NetClientHandler par1NetClientHandler, WorldSettings par2WorldSettings, int par3, int par4) {
+		super("MpServer", WorldProvider.getProviderForDimension(par3), par2WorldSettings);
 		this.sendQueue = par1NetClientHandler;
 		this.difficultySetting = par4;
 		this.setSpawnLocation(8, 64, 8);
@@ -48,7 +48,6 @@ public class WorldClient extends World {
 		super.tick();
 		this.func_82738_a(this.getTotalWorldTime() + 1L);
 		this.setWorldTime(this.getWorldTime() + 1L);
-		this.theProfiler.startSection("reEntryProcessing");
 
 		for (int var1 = 0; var1 < 10 && !this.entitySpawnQueue.isEmpty(); ++var1) {
 			Entity var2 = (Entity) this.entitySpawnQueue.iterator().next();
@@ -59,13 +58,9 @@ public class WorldClient extends World {
 			}
 		}
 
-		this.theProfiler.endStartSection("connection");
 		this.sendQueue.processReadPackets();
-		this.theProfiler.endStartSection("chunkCache");
 		this.clientChunkProvider.unloadQueuedChunks();
-		this.theProfiler.endStartSection("tiles");
 		this.tickBlocksAndAmbiance();
-		this.theProfiler.endSection();
 	}
 
 	/**
@@ -106,10 +101,8 @@ public class WorldClient extends World {
 			if (!this.previousActiveChunkSet.contains(var3)) {
 				int var4 = var3.chunkXPos * 16;
 				int var5 = var3.chunkZPos * 16;
-				this.theProfiler.startSection("getChunk");
 				Chunk var6 = this.getChunkFromChunkCoords(var3.chunkXPos, var3.chunkZPos);
 				this.moodSoundAndLightCheck(var4, var5, var6);
-				this.theProfiler.endSection();
 				this.previousActiveChunkSet.add(var3);
 				++var1;
 

@@ -7,6 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import net.lax1dude.eaglercraft.sp.SysUtil;
+
 public class ChunkProviderServer implements IChunkProvider {
 	private Set droppedChunksSet = new HashSet();
 
@@ -227,7 +229,7 @@ public class ChunkProviderServer implements IChunkProvider {
 	public boolean unloadQueuedChunks() {
 		if (!this.worldObj.levelSaving) {
 			
-			long millis = System.currentTimeMillis();
+			long millis = SysUtil.steadyTimeMillis();
 			if(millis - fixTheFuckingMemoryLeak > 10000l) {  // FUCK OFF SUCK MY FUCKING COCK
 				fixTheFuckingMemoryLeak = millis;
 				this.id2ChunkMap.iterate((l,o) -> {

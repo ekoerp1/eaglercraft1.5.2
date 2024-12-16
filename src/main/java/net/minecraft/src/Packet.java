@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import net.lax1dude.eaglercraft.EaglerAdapter;
+
 public abstract class Packet {
 	/** Maps packet id to packet class */
 	public static IntHashMap packetIdToClassMap = new IntHashMap();
@@ -23,7 +25,7 @@ public abstract class Packet {
 	protected ILogAgent field_98193_m;
 
 	/** the system time in milliseconds when this packet was created. */
-	public final long creationTimeMillis = System.currentTimeMillis();
+	public final long creationTimeMillis = EaglerAdapter.steadyTimeMillis();
 	public static long receivedID;
 	public static long receivedSize;
 

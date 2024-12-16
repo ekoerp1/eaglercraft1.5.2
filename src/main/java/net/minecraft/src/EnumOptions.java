@@ -8,7 +8,8 @@ public enum EnumOptions {
 	CHAT_VISIBILITY("options.chat.visibility", false, false), CHAT_COLOR("options.chat.color", false, true), CHAT_LINKS("options.chat.links", false, true), CHAT_OPACITY("options.chat.opacity", true, false),
 	CHAT_LINKS_PROMPT("options.chat.links.prompt", false, true), USE_SERVER_TEXTURES("options.serverTextures", false, true), SNOOPER_ENABLED("options.snooper", false, true), USE_FULLSCREEN("options.fullscreen", false, true),
 	ENABLE_FOG("options.fog", false, true), SHOW_CAPE("options.showCape", false, true), ANTIALIASING("options.framebufferAntialias", false, false), CHAT_SCALE("options.chat.scale", true, false), CHAT_WIDTH("options.chat.width", true, false),
-	CHAT_HEIGHT_FOCUSED("options.chat.height.focused", true, false), CHAT_HEIGHT_UNFOCUSED("options.chat.height.unfocused", true, false), CHUNK_UPDATES("options.chunkUpdates", false, false), ADDERALL("options.adderall", false, true);
+	CHAT_HEIGHT_FOCUSED("options.chat.height.focused", true, false), CHAT_HEIGHT_UNFOCUSED("options.chat.height.unfocused", true, false), CHUNK_UPDATES("options.chunkUpdates", false, false), ADDERALL("options.adderall", false, true),
+	VSYNC("options.vsync", false, true);
 
 	private final boolean enumFloat;
 	private final boolean enumBoolean;

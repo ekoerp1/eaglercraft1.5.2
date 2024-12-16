@@ -278,7 +278,7 @@ public class ServerList {
 						addr = "ws://" + addr;
 					}
 				}
-				dat.pingSentTime = System.currentTimeMillis();
+				dat.pingSentTime = EaglerAdapter.steadyTimeMillis();
 				dat.currentQuery = EaglerAdapter.openQuery("MOTD", addr);
 				if(dat.currentQuery == null) {
 					dat.hasPing = true;

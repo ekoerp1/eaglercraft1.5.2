@@ -26,7 +26,7 @@ public class GuiScreenSingleplayerConnecting extends GuiScreen {
 	}
 	
 	public void initGui() {
-		if(startStartTime == 0) this.startStartTime = System.currentTimeMillis();
+		if(startStartTime == 0) this.startStartTime = EaglerAdapter.steadyTimeMillis();
 		this.buttonList.add(killTask = new GuiButton(0, this.width / 2 - 100, this.height / 3 + 50, "Kill Task"));
 		killTask.enabled = false;
 	}
@@ -36,7 +36,7 @@ public class GuiScreenSingleplayerConnecting extends GuiScreen {
 		float f = 2.0f;
 		int top = this.height / 3;
 		
-		long millis = System.currentTimeMillis();
+		long millis = EaglerAdapter.steadyTimeMillis();
 		
 		long dots = (millis / 500l) % 4l;
 		this.drawString(fontRenderer, message + (dots > 0 ? "." : "") + (dots > 1 ? "." : "") + (dots > 2 ? "." : ""), (this.width - this.fontRenderer.getStringWidth(message)) / 2, top + 10, 0xFFFFFF);
@@ -68,7 +68,7 @@ public class GuiScreenSingleplayerConnecting extends GuiScreen {
 			}
 		}
 		
-		long millis = System.currentTimeMillis();
+		long millis = EaglerAdapter.steadyTimeMillis();
 		if(millis - startStartTime > 6000l) {
 			killTask.enabled = true;
 		}

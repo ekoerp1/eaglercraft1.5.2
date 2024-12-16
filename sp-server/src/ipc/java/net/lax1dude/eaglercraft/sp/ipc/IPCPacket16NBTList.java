@@ -25,8 +25,8 @@ public class IPCPacket16NBTList implements IPCPacketBase {
 	public final List<NBTTagCompound> nbtTagList;
 	
 	public IPCPacket16NBTList() {
-		tagList = new LinkedList();
-		nbtTagList = new LinkedList();
+		tagList = new LinkedList<>();
+		nbtTagList = new LinkedList<>();
 	}
 	
 	public IPCPacket16NBTList(int opcode, NBTTagCompound[] list) {
@@ -34,7 +34,7 @@ public class IPCPacket16NBTList implements IPCPacketBase {
 	}
 	
 	public IPCPacket16NBTList(int opcode, List<NBTTagCompound> list) {
-		tagList = new LinkedList();
+		tagList = new LinkedList<>();
 		nbtTagList = list;
 		for(int i = 0, size = list.size(); i < size; ++i) {
 			NBTTagCompound tag = list.get(i);

@@ -65,7 +65,7 @@ public class WebsocketNetworkManager implements INetworkManager {
 	}
 	
 	private ByteBuffer oldChunkBuffer = null;
-	private LinkedList<ByteBuffer> readChunks = new LinkedList();
+	private LinkedList<ByteBuffer> readChunks = new LinkedList<>();
 	
 	public void processReadPackets() {
 		readChunks.clear();

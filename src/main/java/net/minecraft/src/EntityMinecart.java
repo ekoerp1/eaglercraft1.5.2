@@ -74,11 +74,11 @@ public abstract class EntityMinecart extends Entity {
 	}
 
 	protected void entityInit() {
-		this.dataWatcher.addObject(17, new Integer(0));
-		this.dataWatcher.addObject(18, new Integer(1));
-		this.dataWatcher.addObject(19, new Integer(0));
-		this.dataWatcher.addObject(20, new Integer(0));
-		this.dataWatcher.addObject(21, new Integer(6));
+		this.dataWatcher.addObject(17, Integer.valueOf(0));
+		this.dataWatcher.addObject(18, Integer.valueOf(1));
+		this.dataWatcher.addObject(19, Integer.valueOf(0));
+		this.dataWatcher.addObject(20, Integer.valueOf(0));
+		this.dataWatcher.addObject(21, Integer.valueOf(6));
 		this.dataWatcher.addObject(22, Byte.valueOf((byte) 0));
 	}
 

@@ -5,6 +5,8 @@ import java.util.LinkedList;
 import java.util.ListIterator;
 import javax.sound.sampled.AudioFormat;
 
+import net.lax1dude.eaglercraft.EaglerAdapter;
+
 /**
  * The Source class is used to store information about a source.  
  * Source objects are stored in a map in the Library class.  The 
@@ -476,7 +478,7 @@ public class Source
         fadeOutMilis = milis;
         fadeInMilis = 0;
         fadeOutGain = 1.0f;
-        lastFadeCheck = System.currentTimeMillis();
+        lastFadeCheck = EaglerAdapter.steadyTimeMillis();
 
         synchronized( soundSequenceLock )
         {
@@ -529,7 +531,7 @@ public class Source
         fadeInMilis = milisIn;
 
         fadeOutGain = 1.0f;
-        lastFadeCheck = System.currentTimeMillis();
+        lastFadeCheck = EaglerAdapter.steadyTimeMillis();
 
         synchronized( soundSequenceLock )
         {
@@ -555,7 +557,7 @@ public class Source
         if( fadeOutGain == -1.0f && fadeInGain == 1.0f )
             return false;
 
-        long currentTime = System.currentTimeMillis();
+        long currentTime = EaglerAdapter.steadyTimeMillis();
         long milisPast = currentTime - lastFadeCheck;
         lastFadeCheck = currentTime;
 

@@ -7,6 +7,6 @@
  * in the user manual at https://docs.gradle.org/6.0/userguide/multi_project_builds.html
  */
 
-rootProject.name = 'eaglercraft-sp-server'
+rootProject.name = 'eaglercraft-sp-server-service-pack-2'
 
 // you eagler

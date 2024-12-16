@@ -15,11 +15,11 @@ public class IPCPacket15ThrowException implements IPCPacketBase {
 	public final List<String> stackTrace;
 	
 	public IPCPacket15ThrowException() {
-		stackTrace = new ArrayList();
+		stackTrace = new ArrayList<>();
 	}
 	
 	public IPCPacket15ThrowException(String errorMessage, String[] list) {
-		stackTrace = new ArrayList(Arrays.asList(list));
+		stackTrace = new ArrayList<>(Arrays.asList(list));
 		this.errorMessage = errorMessage;
 	}
 	

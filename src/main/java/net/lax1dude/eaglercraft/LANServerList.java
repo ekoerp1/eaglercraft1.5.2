@@ -13,15 +13,15 @@ import net.lax1dude.eaglercraft.sp.relay.pkt.IPacket07LocalWorlds.LocalWorld;
 
 public class LANServerList {
 	
-	private final List<LanServer> lanServersList = new LinkedList();
-	private final Map<String,RelayWorldsQuery> lanServersQueryList = new LinkedHashMap();
-	private final Set<String> deadURIs = new HashSet();
+	private final List<LanServer> lanServersList = new LinkedList<>();
+	private final Map<String,RelayWorldsQuery> lanServersQueryList = new LinkedHashMap<>();
+	private final Set<String> deadURIs = new HashSet<>();
 	
 	private long lastRefresh = 0l;
 	private int refreshCounter = 0;
 	
 	public void update() {
-		long millis = System.currentTimeMillis();
+		long millis = EaglerAdapter.steadyTimeMillis();
 		if(millis - lastRefresh > 10000l) {
 			if(++refreshCounter < 10) {
 				refresh();
@@ -91,7 +91,7 @@ public class LANServerList {
 	}
 
 	private void refresh() {
-		lastRefresh = System.currentTimeMillis();
+		lastRefresh = EaglerAdapter.steadyTimeMillis();
 		for(int i = 0, l = IntegratedServer.relayManager.count(); i < l; ++i) {
 			RelayServer srv = IntegratedServer.relayManager.get(i);
 			if(!lanServersQueryList.containsKey(srv.address) && !deadURIs.contains(srv.address)) {

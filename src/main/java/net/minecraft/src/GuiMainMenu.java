@@ -5,7 +5,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import net.lax1dude.eaglercraft.AssetRepository;
 import net.lax1dude.eaglercraft.ConfigConstants;
 import net.lax1dude.eaglercraft.EaglerAdapter;
 import net.lax1dude.eaglercraft.EaglercraftRandom;
@@ -14,6 +13,7 @@ import net.lax1dude.eaglercraft.GuiScreenSingleplayerLoading;
 import net.lax1dude.eaglercraft.IntegratedServer;
 import net.lax1dude.eaglercraft.LocalStorageManager;
 import net.lax1dude.eaglercraft.TextureLocation;
+import net.lax1dude.eaglercraft.EaglerMisc;
 import net.lax1dude.eaglercraft.adapter.Tessellator;
 import net.minecraft.client.Minecraft;
 
@@ -86,12 +86,12 @@ public class GuiMainMenu extends GuiScreen {
 				this.splashText = "missingno";
 			}
 		}
-		this.field_92025_p = EaglerAdapter._wisWebGL() ? ("eaglercraft javascript runtime") : ("eaglercraft desktop runtime");
-		this.start = System.currentTimeMillis();
+		this.field_92025_p = "Eaglercraft 1.5.2 Service Pack #2";
+		this.start = EaglerAdapter.steadyTimeMillis();
 		this.start += this.start % 10000l;
 		this.ackLines = new ArrayList();
 		
-		if(!LocalStorageManager.gameSettingsStorage.getBoolean("seenAcknowledgements")) {
+		if(!LocalStorageManager.gameSettingsStorage.getBoolean("seenAcknowledgementsSP2")) {
 			this.showAck = true;
 		}
 	}
@@ -128,8 +128,8 @@ public class GuiMainMenu extends GuiScreen {
 	}
 	
 	private void hideAck() {
-		if(!LocalStorageManager.gameSettingsStorage.getBoolean("seenAcknowledgements")) {
-			LocalStorageManager.gameSettingsStorage.setBoolean("seenAcknowledgements", true);
+		if(!LocalStorageManager.gameSettingsStorage.getBoolean("seenAcknowledgementsSP2")) {
+			LocalStorageManager.gameSettingsStorage.setBoolean("seenAcknowledgementsSP2", true);
 			LocalStorageManager.saveStorageG();
 		}
 		showAck = false;
@@ -154,6 +154,7 @@ public class GuiMainMenu extends GuiScreen {
 			this.buttonList.add(new GuiButton(2, this.width / 2 - 100, var4, var2.translateKey("menu.multiplayer")));
 			this.buttonList.add(new GuiButton(3, this.width / 2 - 100, var4 + 24, var2.translateKey("menu.forkme")));
 		}
+		((GuiButton)this.buttonList.get(this.buttonList.size() - 1)).enabled = false;
 
 		this.buttonList.add(new GuiButton(0, this.width / 2 - 100, var4 + 72 + 12, 98, 20, var2.translateKey("menu.options")));
 		this.buttonList.add(new GuiButton(4, this.width / 2 + 2, var4 + 72 + 12, 98, 20, var2.translateKey("menu.editprofile")));
@@ -171,11 +172,11 @@ public class GuiMainMenu extends GuiScreen {
 			this.field_92019_w = this.field_92021_u + 12;
 		}
 
-		ConfigConstants.panoramaBlur = AssetRepository.getResource("/title/no-pano-blur.flag") == null;
+		ConfigConstants.panoramaBlur = mc.texturePackList.getSelectedTexturePack().getResourceAsBytes("/title/no-pano-blur.flag") == null;
 		
 		if(this.ackLines.isEmpty()) {
 			int width = 315;
-			String file = EaglerAdapter.fileContents("/credits.txt");
+			String file = EaglerMisc.bytesToString(Minecraft.getMinecraft().texturePackList.getSelectedTexturePack().getResourceAsBytes("/credits.txt"));
 			if(file == null) {
 				for(int i = 0; i < 30; ++i) {
 					this.ackLines.add(" -- file not found -- ");
@@ -341,7 +342,7 @@ public class GuiMainMenu extends GuiScreen {
 				float var9 = 0.0F;
 				EaglerAdapter.glTranslatef(var7, var8, var9);
 				
-				float panTimer = (float)(System.currentTimeMillis() - start) * 0.03f;
+				float panTimer = (float)(EaglerAdapter.steadyTimeMillis() - start) * 0.03f;
 				EaglerAdapter.glRotatef(MathHelper.sin(panTimer / 400.0F) * 25.0F + 20.0F, 1.0F, 0.0F, 0.0F);
 				EaglerAdapter.glRotatef(-(panTimer) * 0.1F, 0.0F, 1.0F, 0.0F);
 			}
@@ -504,7 +505,7 @@ public class GuiMainMenu extends GuiScreen {
 		this.drawTexturedModalRect(var6 + 155, var7 + 0, 0, 45, 155, 44);
 
 		this.drawString(this.fontRenderer, "minecraft 1.5.2", 2, this.height - 20, 16777215);
-		this.drawString(this.fontRenderer, ConfigConstants.mainMenuString + EnumChatFormatting.GRAY + " (cracked)", 2, this.height - 10, 16777215);
+		this.drawString(this.fontRenderer, ConfigConstants.mainMenuString + " official", 2, this.height - 10, 16777215);
 
 		//String var10 = "Copyright " + Calendar.getInstance().get(Calendar.YEAR) + " Mojang AB.";
 		String var10 = "copyright 2013 Mojang AB";
@@ -645,7 +646,7 @@ public class GuiMainMenu extends GuiScreen {
 			}else {
 				EaglerAdapter.glEnable(EaglerAdapter.GL_BLEND);
 				EaglerAdapter.glBlendFunc(EaglerAdapter.GL_SRC_ALPHA, EaglerAdapter.GL_ONE_MINUS_SRC_ALPHA);
-				EaglerAdapter.glColor4f(0.9f, 0.9f, 0.9f, MathHelper.sin((float)(System.currentTimeMillis() % 1000000l) / 300f) * 0.17f + 0.5f);
+				EaglerAdapter.glColor4f(0.9f, 0.9f, 0.9f, MathHelper.sin((float)(EaglerAdapter.steadyTimeMillis() % 1000000l) / 300f) * 0.17f + 0.5f);
 				
 				items.bindTexture();
 				

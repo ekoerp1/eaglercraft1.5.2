@@ -3,6 +3,8 @@ package net.minecraft.src;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.lax1dude.eaglercraft.sp.SysUtil;
+
 public class BiomeCache {
 	/** Reference to the WorldChunkManager */
 	private final WorldChunkManager chunkManager;
@@ -38,7 +40,7 @@ public class BiomeCache {
 			this.cache.add(var5);
 		}
 
-		var5.lastAccessTime = System.currentTimeMillis();
+		var5.lastAccessTime = SysUtil.steadyTimeMillis();
 		return var5;
 	}
 
@@ -54,7 +56,7 @@ public class BiomeCache {
 	 * least 30 seconds.
 	 */
 	public void cleanupCache() {
-		long var1 = System.currentTimeMillis();
+		long var1 = SysUtil.steadyTimeMillis();
 		long var3 = var1 - this.lastCleanupTime;
 
 		if (var3 > 7500L || var3 < 0L) {

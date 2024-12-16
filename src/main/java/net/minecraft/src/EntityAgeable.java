@@ -8,7 +8,7 @@ public abstract class EntityAgeable extends EntityCreature {
 
 	protected void entityInit() {
 		super.entityInit();
-		this.dataWatcher.addObject(12, new Integer(0));
+		this.dataWatcher.addObject(12, Integer.valueOf(0));
 	}
 
 	/**

@@ -8,6 +8,7 @@ import java.util.List;
 
 import net.lax1dude.eaglercraft.sp.IntegratedServer;
 import net.lax1dude.eaglercraft.sp.SYS;
+import net.lax1dude.eaglercraft.sp.SysUtil;
 import net.lax1dude.eaglercraft.sp.VFSSaveHandler;
 import net.lax1dude.eaglercraft.sp.VFile;
 import net.lax1dude.eaglercraft.sp.WorkerListenThread;
@@ -29,7 +30,6 @@ import net.minecraft.src.IUpdatePlayerListBox;
 import net.minecraft.src.MinecraftException;
 import net.minecraft.src.Packet;
 import net.minecraft.src.Packet4UpdateTime;
-import net.minecraft.src.Profiler;
 import net.minecraft.src.ServerCommandManager;
 import net.minecraft.src.ServerConfigurationManager;
 import net.minecraft.src.StringTranslate;
@@ -48,7 +48,6 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 	/** List of names of players who are online. */
 	protected final List playersOnline = new ArrayList();
 	protected final ICommandManager commandManager;
-	public final Profiler theProfiler = new Profiler();
 
 	/** The server world instances. */
 	public WorldServer[] worldServers;
@@ -122,12 +121,7 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 	 */
 	protected long timeOfLastWarning;
 	protected String userMessage;
-	protected boolean startProfiling;
 	protected boolean field_104057_T = false;
-
-	private int tpsCounter = 0;
-	private int tpsMeasure = 0;
-	private long tpsTimer = 0l;
 
 	public MinecraftServer(String folder) {
 		mcServer = this;
@@ -196,10 +190,9 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 			}
 
 			if (var10 == 0) {
-				this.worldServers[var10] = new WorldServer(this, var7, par1Str, var11, var8, this.theProfiler, this.getLogAgent());
+				this.worldServers[var10] = new WorldServer(this, var7, par1Str, var11, var8, this.getLogAgent());
 			} else {
-				this.worldServers[var10] = new WorldServerMulti(this, var7, par1Str, var11, var8, this.worldServers[0],
-						this.theProfiler, this.getLogAgent());
+				this.worldServers[var10] = new WorldServerMulti(this, var7, par1Str, var11, var8, this.worldServers[0], this.getLogAgent());
 			}
 
 			this.worldServers[var10].addWorldAccess(new WorldManager(this, this.worldServers[var10]));
@@ -355,10 +348,10 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 	public void run() {
 		try {
 			if (this.startServer()) {
-				long var1 = System.currentTimeMillis();
+				long var1 = SysUtil.steadyTimeMillis();
 
 				for (long var50 = 0L; this.serverRunning; this.serverIsRunning = true) {
-					long var5 = System.currentTimeMillis();
+					long var5 = SysUtil.steadyTimeMillis();
 					long var7 = var5 - var1;
 
 					if (var7 > 2000L && var1 - this.timeOfLastWarning >= 15000L) {
@@ -386,7 +379,7 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 						}
 					}
 
-					Thread.sleep(1L);
+					SysUtil.sleep(1);
 				}
 			} else {
 				throw new RuntimeException("Server did not init correctly");
@@ -426,23 +419,13 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 		AxisAlignedBB.getAABBPool().cleanPool();
 		++this.tickCounter;
 
-		if (this.startProfiling) {
-			this.startProfiling = false;
-			this.theProfiler.profilingEnabled = true;
-			this.theProfiler.clearProfiling();
-		}
-
-		this.theProfiler.startSection("root");
 		this.updateTimeLightAndEntities();
 
 		if (this.tickCounter % 900 == 0) {
-			this.theProfiler.startSection("save");
 			this.serverConfigManager.saveAllPlayerData();
 			this.saveAllWorlds(true);
-			this.theProfiler.endSection();
 		}
 
-		this.theProfiler.startSection("tallying");
 		this.tickTimeArray[this.tickCounter % 100] = System.nanoTime() - var1;
 		this.sentPacketCountArray[this.tickCounter % 100] = Packet.sentID - this.lastSentPacketID;
 		this.lastSentPacketID = Packet.sentID;
@@ -452,21 +435,9 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 		this.lastReceivedID = Packet.receivedID;
 		this.receivedPacketSizeArray[this.tickCounter % 100] = Packet.receivedSize - this.lastReceivedSize;
 		this.lastReceivedSize = Packet.receivedSize;
-		this.theProfiler.endSection();
-		this.theProfiler.endSection();
-		
-		++tpsCounter;
-		long millis = System.currentTimeMillis();
-		long elapsed = millis - tpsTimer;
-		if(elapsed >= 1000l) {
-			tpsTimer = millis;
-			tpsMeasure = (int)(tpsCounter * 1000l / elapsed);
-			IntegratedServer.sendIPCPacket(new IPCPacket14StringList(IPCPacket14StringList.SERVER_TPS, getTPSAndChunkBuffer()));
-			tpsCounter = 0;
-		}
 	}
 	
-	public List<String> getTPSAndChunkBuffer() {
+	public List<String> getTPSAndChunkBuffer(int tpsCounter) {
 		ArrayList<String> strs = new ArrayList();
 		strs.add("Ticks/Second: " + tpsCounter + "/20");
 		
@@ -505,7 +476,6 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 	}
 
 	public void updateTimeLightAndEntities() {
-		this.theProfiler.startSection("levels");
 		int var1;
 
 		for (var1 = 0; var1 < this.worldServers.length; ++var1) {
@@ -513,45 +483,29 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 
 			if (var1 == 0 || this.getAllowNether()) {
 				WorldServer var4 = this.worldServers[var1];
-				this.theProfiler.startSection(var4.getWorldInfo().getWorldName());
-				this.theProfiler.startSection("pools");
 				var4.getWorldVec3Pool().clear();
-				this.theProfiler.endSection();
 
 				if (this.tickCounter % 20 == 0) {
-					this.theProfiler.startSection("timeSync");
 					this.serverConfigManager.sendPacketToAllPlayersInDimension(
 							new Packet4UpdateTime(var4.getTotalWorldTime(), var4.getWorldTime()),
 							var4.provider.dimensionId);
-					this.theProfiler.endSection();
 				}
 
-				this.theProfiler.startSection("tick");
-				
 				var4.tick();
 				var4.updateEntities();
-				
-				this.theProfiler.endSection();
-				this.theProfiler.startSection("tracker");
+
 				var4.getEntityTracker().updateTrackedEntities();
-				this.theProfiler.endSection();
-				this.theProfiler.endSection();
 			}
 
 			this.timeOfLastDimensionTick[var1][this.tickCounter % 100] = System.nanoTime() - var2;
 		}
 
-		this.theProfiler.endStartSection("connection");
 		this.getNetworkThread().handleNetworkListenThread();
-		this.theProfiler.endStartSection("players");
 		this.serverConfigManager.onTick();
-		this.theProfiler.endStartSection("tickables");
 
 		for (var1 = 0; var1 < this.playersOnline.size(); ++var1) {
 			((IUpdatePlayerListBox) this.playersOnline.get(var1)).update();
 		}
-
-		this.theProfiler.endSection();
 	}
 
 	public boolean getAllowNether() {
@@ -986,10 +940,6 @@ public abstract class MinecraftServer implements ICommandSender, Runnable {
 
 	public int getTickCounter() {
 		return this.tickCounter;
-	}
-
-	public void enableProfiling() {
-		this.startProfiling = true;
 	}
 
 	/**

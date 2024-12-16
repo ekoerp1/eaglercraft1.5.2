@@ -104,20 +104,21 @@ public class DefaultSkinRenderer {
 			false, true
 	};
 
-	private static final HashMap<Integer,EntityOtherPlayerMP> skinCookies = new HashMap();
-	private static final HashMap<EntityOtherPlayerMP,Integer> skinGLUnits = new HashMap();
-	private static final HashMap<EntityOtherPlayerMP,Integer> capeGLUnits = new HashMap();
-	private static final HashMap<EntityOtherPlayerMP,Long> skinGLTimeout = new HashMap();
+	private static final HashMap<Integer,EntityOtherPlayerMP> skinCookies = new HashMap<>();
+	private static final HashMap<EntityOtherPlayerMP,Integer> skinGLUnits = new HashMap<>();
+	private static final HashMap<EntityOtherPlayerMP,Integer> capeGLUnits = new HashMap<>();
+	private static final HashMap<EntityOtherPlayerMP,Long> skinGLTimeout = new HashMap<>();
 	
 	private static long lastClean = 0l;
 	
 	public static void deleteOldSkins() {
-		if(System.currentTimeMillis() - lastClean > 60000l) {
-			lastClean = System.currentTimeMillis();
+		long now = EaglerAdapter.steadyTimeMillis();
+		if(now - lastClean > 60000l) {
+			lastClean = now;
 			Iterator<Entry<EntityOtherPlayerMP,Long>> itr = skinGLTimeout.entrySet().iterator();
 			while(itr.hasNext()) {
 				Entry<EntityOtherPlayerMP,Long> ee = itr.next();
-				if(System.currentTimeMillis() - ee.getValue() > 80000l) {
+				if(now - ee.getValue() > 80000l) {
 					itr.remove();
 					if(skinGLUnits.containsKey(ee.getKey())) {
 						Minecraft.getMinecraft().renderEngine.deleteTexture(skinGLUnits.remove(ee.getKey()));
@@ -167,7 +168,7 @@ public class DefaultSkinRenderer {
 							skinGLUnits.put(pp, Minecraft.getMinecraft().renderEngine.setupTextureRaw(skinToLoad, w, h));
 						}
 					}
-					skinGLTimeout.put(pp, System.currentTimeMillis());
+					skinGLTimeout.put(pp, EaglerAdapter.steadyTimeMillis());
 					Integer i = skinGLUnits.get(pp);
 					if(i != null && i.intValue() > 0) {
 						Minecraft.getMinecraft().renderEngine.bindTexture(i.intValue());
@@ -257,7 +258,7 @@ public class DefaultSkinRenderer {
 											capeGLUnits.put(pp, Minecraft.getMinecraft().renderEngine.setupTextureRaw(dataToLoad, w, h));
 										}
 									}
-									skinGLTimeout.put(pp, System.currentTimeMillis());
+									skinGLTimeout.put(pp, EaglerAdapter.steadyTimeMillis());
 									Integer i = capeGLUnits.get(pp);
 									if(i != null && i.intValue() > 0) {
 										EaglerAdapter.glMatrixMode(EaglerAdapter.GL_TEXTURE);
@@ -586,32 +587,32 @@ public class DefaultSkinRenderer {
 				if(isNew) {
 					if((id < 0 && EaglerProfile.skins.get(id2).slim) || (id >= 0 && isAlexSkin(id))) {
 						newSkinRendererSlim.blockTransparentSkin = true;
-						newSkinRendererSlim.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+						newSkinRendererSlim.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 						newSkinRendererSlim.blockTransparentSkin = false;
 					}else {
 						newSkinRenderer.blockTransparentSkin = true;
-						newSkinRenderer.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+						newSkinRenderer.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 						newSkinRenderer.blockTransparentSkin = false;
 					}
 				}else {
 					oldSkinRenderer.blockTransparentSkin = true;
-					oldSkinRenderer.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+					oldSkinRenderer.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 					oldSkinRenderer.blockTransparentSkin = false;
 				}
 				gonnaShowCape = capeMode;
 			}else if(isZombieModel(id)) {
 				if(zombieRenderer == null) zombieRenderer = new ModelZombie(0.0F, true);
 				zombieRenderer.isChild = false;
-				zombieRenderer.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+				zombieRenderer.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 				gonnaShowCape = capeMode;
 			}else if(id == 32) {
 				if(villagerRenderer == null) villagerRenderer = new ModelVillager(0.0F);
 				villagerRenderer.isChild = false;
-				villagerRenderer.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+				villagerRenderer.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 			}else if(id == 19) {
 				if(endermanRenderer == null) endermanRenderer = new ModelEnderman();
 				endermanRenderer.isChild = false;
-				endermanRenderer.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+				endermanRenderer.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 				EaglerAdapter.glColor4f(1.4f, 1.4f, 1.4f, 1.0f);
 				//EaglerAdapter.glEnable(EaglerAdapter.GL_BLEND);
 				//EaglerAdapter.glDisable(EaglerAdapter.GL_ALPHA_TEST);
@@ -620,7 +621,7 @@ public class DefaultSkinRenderer {
 				EaglerAdapter.glEnable(EaglerAdapter.GL_TEXTURE_2D);
 				EaglerAdapter.glDisable(EaglerAdapter.GL_DEPTH_TEST);
 				RenderEnderman.tex_eyes.bindTexture();
-				endermanRenderer.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+				endermanRenderer.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 				EaglerAdapter.glBlendFunc(EaglerAdapter.GL_SRC_ALPHA, EaglerAdapter.GL_ONE_MINUS_SRC_ALPHA);
 				EaglerAdapter.glEnable(EaglerAdapter.GL_ALPHA_TEST);
 				EaglerAdapter.glEnable(EaglerAdapter.GL_DEPTH_TEST);
@@ -629,12 +630,12 @@ public class DefaultSkinRenderer {
 			}else if(id == 20) {
 				if(skeletonRenderer == null) skeletonRenderer = new ModelSkeleton(0.0F);
 				skeletonRenderer.isChild = false;
-				skeletonRenderer.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+				skeletonRenderer.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 			}else if(id == 21) {
 				if(blazeRenderer == null) blazeRenderer = new ModelBlaze();
 				blazeRenderer.isChild = false;
 				EaglerAdapter.glColor4f(1.5f, 1.5f, 1.5f, 1.0f);
-				blazeRenderer.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+				blazeRenderer.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 			}
 			if(gonnaShowCape && !(EaglerProfile.presetCapeId >= 0 && defaultVanillaCapes[EaglerProfile.presetCapeId] == null)) {
 				EaglerAdapter.glPushMatrix();
@@ -706,7 +707,7 @@ public class DefaultSkinRenderer {
 		EaglerAdapter.glTranslatef(0.0F, -1.0F, 0.0F);
 		
 		bp.isChild = false;
-		bp.render(null, 0.0f, 0.0f, (float)(System.currentTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
+		bp.render(null, 0.0f, 0.0f, (float)(EaglerAdapter.steadyTimeMillis() % 100000) / 50f, ((x - mx) * 0.06f), ((y - my) * -0.1f), 0.0625F);
 		
 		EaglerAdapter.glPopMatrix();
 		EaglerAdapter.glDisable(EaglerAdapter.GL_RESCALE_NORMAL);

@@ -57,7 +57,7 @@ public class GuiVoiceOverlay extends Gui {
 			voiceGuiIcons.bindTexture();
 			
 			if((mc.currentScreen == null || !mc.currentScreen.blockHotKeys()) && EaglerAdapter.isKeyDown(mc.gameSettings.voicePTTKey)) {
-				long millis = System.currentTimeMillis();
+				long millis = EaglerAdapter.steadyTimeMillis();
 				if(pttTimer == 0l) {
 					pttTimer = millis;
 				}
@@ -93,7 +93,7 @@ public class GuiVoiceOverlay extends Gui {
 					Set<String> speakers = EaglerAdapter.getVoiceSpeaking();
 					Set<String> muted = EaglerAdapter.getVoiceMuted();
 					
-					List<String> listenerList = new ArrayList();
+					List<String> listenerList = new ArrayList<>();
 					listenerList.addAll(listeners);
 					listenerList.removeAll(muted);
 					
@@ -169,7 +169,7 @@ public class GuiVoiceOverlay extends Gui {
 				Set<String> speakers = EaglerAdapter.getVoiceSpeaking();
 				Set<String> muted = EaglerAdapter.getVoiceMuted();
 				
-				List<String> listenerList = new ArrayList();
+				List<String> listenerList = new ArrayList<>();
 				listenerList.addAll(speakers);
 				listenerList.removeAll(muted);
 				

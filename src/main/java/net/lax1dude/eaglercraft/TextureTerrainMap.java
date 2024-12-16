@@ -150,7 +150,7 @@ public class TextureTerrainMap implements IconRegister {
 		}
 		
 		private void loadData() {
-			byte[] data = EaglerAdapter.loadResourceBytes("/" + map.basePath + name + ".png");
+			byte[] data = Minecraft.getMinecraft().texturePackList.getSelectedTexturePack().getResourceAsBytes("/" + map.basePath + name + ".png");
 			if(data == null) {
 				map.replaceTexture(this, map.missingData);
 			}else {
@@ -169,7 +169,7 @@ public class TextureTerrainMap implements IconRegister {
 						
 						EaglerAdapter.glBindTexture(EaglerAdapter.GL_TEXTURE_2D, -1);
 						frames = EaglerAdapter._wglGenTextures();
-						EaglerAdapter._wglBindTexture(EaglerAdapter.GL_TEXTURE_2D, frames);
+						EaglerAdapter.glBindTexture(EaglerAdapter.GL_TEXTURE_2D, frames);
 
 						EaglerImage mipLvl = populateAlpha(img);
 						uploadBuffer.clear();
@@ -207,8 +207,8 @@ public class TextureTerrainMap implements IconRegister {
 								EaglerAdapter.GL_RGBA, EaglerAdapter.GL_UNSIGNED_BYTE, uploadBuffer);
 						
 						EaglerAdapter.glTexParameteri(EaglerAdapter.GL_TEXTURE_2D, EaglerAdapter.GL_TEXTURE_MAX_LEVEL, 4);
-						
-						String dat = EaglerAdapter.fileContents("/" + map.basePath + name + ".txt");
+
+						String dat = EaglerMisc.bytesToString(Minecraft.getMinecraft().texturePackList.getSelectedTexturePack().getResourceAsBytes("/" + map.basePath + name + ".txt"));
 						if(dat != null) System.out.println("Found animation info for: " + map.basePath + name + ".png");
 						if(dat == null || (dat = dat.trim()).isEmpty()) {
 							framesIdx = new int[divs];
@@ -263,7 +263,7 @@ public class TextureTerrainMap implements IconRegister {
 		this.height = size;
 		this.basePath = par3Str;
 		this.missingImage = new TerrainIconV2(nextSlot[1]++, 1, this, null);
-		this.iconList = new ArrayList();
+		this.iconList = new ArrayList<>();
 		this.texture = EaglerAdapter.glGenTextures();
 		this.copyFramebuffer = EaglerAdapter._wglCreateFramebuffer();
 		EaglerAdapter.glBindTexture(EaglerAdapter.GL_TEXTURE_2D, texture);
@@ -499,7 +499,7 @@ public class TextureTerrainMap implements IconRegister {
 		EaglerAdapter._wglBindFramebuffer(EaglerAdapter._wGL_FRAMEBUFFER, copyFramebuffer);
 		EaglerAdapter._wglReadBuffer(EaglerAdapter._wGL_COLOR_ATTACHMENT0);
 		for(int i = 0; i < 5; i++) {
-			EaglerAdapter._wglBindTexture(EaglerAdapter.GL_TEXTURE_2D, icon.frames);
+			EaglerAdapter.glBindTexture(EaglerAdapter.GL_TEXTURE_2D, icon.frames);
 			EaglerAdapter._wglFramebufferTexture2D(EaglerAdapter._wGL_COLOR_ATTACHMENT0, icon.frames, i);
 			EaglerAdapter.glBindTexture(EaglerAdapter.GL_TEXTURE_2D, texture);
 			

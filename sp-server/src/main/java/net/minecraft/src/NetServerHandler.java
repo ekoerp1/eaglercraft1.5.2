@@ -78,9 +78,7 @@ public class NetServerHandler extends NetHandler {
 	public void handlePackets() {
 		this.field_72584_h = false;
 		++this.currentTicks;
-		this.mcServer.theProfiler.startSection("packetflow");
 		this.netManager.processReadPackets();
-		this.mcServer.theProfiler.endStartSection("keepAlive");
 
 		if ((long) this.currentTicks - this.ticksOfLastKeepAlive > 20L) {
 			this.ticksOfLastKeepAlive = (long) this.currentTicks;
@@ -96,9 +94,6 @@ public class NetServerHandler extends NetHandler {
 		if (this.creativeItemCreationSpamThresholdTally > 0) {
 			--this.creativeItemCreationSpamThresholdTally;
 		}
-
-		this.mcServer.theProfiler.endStartSection("playerTick");
-		this.mcServer.theProfiler.endSection();
 	}
 	
 	public boolean shouldBeRemoved() {

@@ -1,21 +1,30 @@
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA256
 
-Hello, this is lax1dude, I regret to inform you that the official repository
-for Eaglercraft 1.5.2 has been deleted
+Eaglercraft 1.5.2 - Service Pack 2
 
-This folder contains a copy of the repo from the day it was deleted, and a tool
-to verify it's authenticity
+Released: December 14th, 2024 - "24w50a"
+
+New in Service Pack 2:
+
+ - improved resource packs (by ayunami2000)
+ - improved the FPS even more
+ - improved voice chat reliability
+ - improved shared worlds reliability
+ - backported X's vanilla world export
+ - backported X's vsync mode
+
+Made by lax1dude
 
 Run "GetRepositorySignature.bat", and verify that this is the result:
 
 
 ~~~ Repository SHA-256: ~~~
 
-     ba2015db643a0dd6
-     e78bbf92f27f76ae
-     0797feb78874edb4
-     19d14a8b54373269
+     3f95bf5556982de1
+     3cd4c52e572d6102
+     3e82b835979f0430
+     c05a4989dacc51ce
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -27,8 +36,7 @@ GetRepositorySignature.bat: 4B995076348E03A5322F3EB6AF72948E4C27CEB6
 GetRepositorySignature.sh: 8B269BA0D54C2B4BD7E9199B10C9769D39F00DC6
 
 
-If this is all correct, then you are truly using the official final release of
-Eaglercraft 1.5.2, made by the real LAX1DUDE ;>
+If this is all correct, then this is the official Eaglercraft 1.5.2 Service Pack 2
 
 
 You can download a clean copy of "GetRepositorySignature.jar" here: [https://deev.is/eagler/GetRepositorySignature.jar]
@@ -42,35 +50,19 @@ which allows you to select the repository to check using a file chooser
 
 To verify the PGP signature on this message, my public key is here: [https://deev.is/certs/LAX1DUDE_eagler_public.asc]
 
-The original copy of this message is available here too: [https://deev.is/eagler/LAX1DUDE_SIGNATURE.txt]
-
-
-Thank you all for the stars and support for this project but I simply want closure
-that I will never wake up one busy day in the future and have to drop everything
-and come back to this project and fight a DMCA when I'm not even working on it
-anymore. When a repository on github gets DMCA'd, all of it's forks also get DMCA'd
-which would eradicate it off github, but if we all fork it and then delete the
-original then Microsoft would have to DMCA individual forks instead of just my
-original repository which they obviously don't have time to do. This is for the
-best, trust me, we'll always have this checksum here of the files of the official
-final release so we can always find a repo and come back to this commit and check
-if it's mine and if it is then play it the way it was meant to be played with all
-of my original code and it'll be like I never deleted it
-
-
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCAAdFiEEcBgAq2s4AHU8tLsdcu68cJImpGoFAmNmFz4ACgkQcu68cJIm
-pGrjlBAAjxaXHOI6DNoAORhsJUi+B9z84/3i+XJ7U7RXYnbI1Gtg6A6s2hozoXI3
-Dp3lrmS6VpaZiutlyzl6maraAtMKR/edQPl1N2p8ugqr6g+nwfCuBCjl32MOI56a
-DDti9Vzd8SUVKh4KCxQ4MJy8v0lg42z/1DBEWDWb/Ri7dWeGcxQARjNHnql999Jo
-f+ECDvOQgOtgQrIQkkFXfxqSvJi5uAT3MXQvEF7hBhMf9XbwNy8gfE8s1+o7rn55
-D78jmk0w3utzCzzj7QmAha+fLt9K97Xyd4L3vtMvnoEraW87Z3H8UCBQde+gXmm6
-Qwvul+pX/AmZaYF7cLs74oTctu6njCswXiKmobQpi0eIu1F4Q7fefByMFUUeF3kB
-8fNLUb7FYsYr97LWEtufDPdJ3eM/o5qn4SGlzjQlYUG/BGSfKd2dioNAKxwQZ4yb
-rLegHuQOjm3aAk0qlYaDM1PFpK5wiz3xjGIxt8uxxVrZ023Nk6fPF3ONyWlswYyv
-cnIIO9dSmcvvyIanhHF+tGYaPOct61YLH1vDoWE/OUrCG/B7vGGDnKW3X2dcI7NQ
-Pe+hgpcKc0qEkX8qr3SxHNJQgcWkVXnWLx8e3zZBqTYdSN8n4KgxJg0enHN9ylMu
-VOAaCkMYZfwK7wQgh0rgynmRyOYO2eQaet4HRsbxJlZLQ01sI5c=
-=Jgpm
+iQIzBAEBCAAdFiEEcBgAq2s4AHU8tLsdcu68cJImpGoFAmdd8f4ACgkQcu68cJIm
+pGoP9Q/7BaDOQpyjnv60IeS3cnzJEEM5Mo5CFfmooQaorunfRFJ8/6JQzmqWtwc4
+tV7aYUgTTSf/UXDA/Ii9husjFLAldrFMC2L+IaUpuNfW4X7fDElOUAOeCHpbJG2u
+XylSM+2jR2QShRkr5qKa7cR6X4ZD0HCmtJGF0q/gfmDFDWu+ZXn9hSIOhK/3eYo1
+aQ5NPEdIW7UtwXE+uA4nAsdZ3sD/GeQcsPEMBrJHPfwwhXY4BMJGQ41Knmz8wQQx
+qgbEp1r7rNaSBKaPE3FHoBk+pey12wxlH5uMIWSIYdPdt6eVbwhZlhQ2Tz226U8y
+//ngP6zj+dZwAkIG2mnxgN4DbTpq2TnMzSrApTpw41/FPXmqOu0P869yGfyG/qT2
+hzyAdBoA+F7RCx6fS4kRNFJPQsYBt8akvbwmx5RxZfKBFbhr0bQCAOvwhltXih8N
+WjVsAWi0dQtofXx5qrZIyxnSlHjvsdEGE1wwbQDiAi9dTyWS+2n1PBd4IPBKbVm0
+xfqAQJXzhrOtCAB34AVGvl/ZlGZHgUxs2J8ZcIB+OzmZCOBKxxOyXYs1qHMQjoDt
+x15frsA0m7Aub9mE4LelAKKukzduRaKIpHxaioNIf2pk5kVjIrW/WOF81jhxSB3D
+Xk340UMSjPk8FnjoxJAN+MNEcTwYOy/ZwaTQd+OYIVSyl3JobbI=
+=KEvn
 -----END PGP SIGNATURE-----

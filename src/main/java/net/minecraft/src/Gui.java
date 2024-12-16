@@ -117,24 +117,26 @@ public class Gui {
 	public void drawTexturedModalRect(int par1, int par2, int par3, int par4, int par5, int par6) {
 		float var7 = 0.00390625F;
 		float var8 = 0.00390625F;
+		float fuck = 0.0001953125F;
 		Tessellator var9 = Tessellator.instance;
 		var9.startDrawingQuads();
-		var9.addVertexWithUV((double) (par1 + 0), (double) (par2 + par6), (double) this.zLevel, (double) ((float) (par3 + 0) * var7), (double) ((float) (par4 + par6) * var8));
-		var9.addVertexWithUV((double) (par1 + par5), (double) (par2 + par6), (double) this.zLevel, (double) ((float) (par3 + par5) * var7), (double) ((float) (par4 + par6) * var8));
-		var9.addVertexWithUV((double) (par1 + par5), (double) (par2 + 0), (double) this.zLevel, (double) ((float) (par3 + par5) * var7), (double) ((float) (par4 + 0) * var8));
-		var9.addVertexWithUV((double) (par1 + 0), (double) (par2 + 0), (double) this.zLevel, (double) ((float) (par3 + 0) * var7), (double) ((float) (par4 + 0) * var8));
+		var9.addVertexWithUV((double) (par1 + 0 + fuck), (double) (par2 + par6 - fuck), (double) this.zLevel, (double) ((float) (par3 + 0 + fuck) * var7), (double) ((float) (par4 + par6 - fuck) * var8));
+		var9.addVertexWithUV((double) (par1 + par5 - fuck), (double) (par2 + par6 - fuck), (double) this.zLevel, (double) ((float) (par3 + par5 - fuck) * var7), (double) ((float) (par4 + par6 - fuck) * var8));
+		var9.addVertexWithUV((double) (par1 + par5 - fuck), (double) (par2 + 0 + fuck), (double) this.zLevel, (double) ((float) (par3 + par5 - fuck) * var7), (double) ((float) (par4 + 0 + fuck) * var8));
+		var9.addVertexWithUV((double) (par1 + 0 + fuck), (double) (par2 + 0 + fuck), (double) this.zLevel, (double) ((float) (par3 + 0 + fuck) * var7), (double) ((float) (par4 + 0 + fuck) * var8));
 		var9.draw();
 	}
 	
 	public static void static_drawTexturedModalRect(int par1, int par2, int par3, int par4, int par5, int par6) {
 		float var7 = 0.00390625F;
 		float var8 = 0.00390625F;
+		float fuck = 0.0001953125F;
 		Tessellator var9 = Tessellator.instance;
 		var9.startDrawingQuads();
-		var9.addVertexWithUV((double) (par1 + 0), (double) (par2 + par6), 0.0D, (double) ((float) (par3 + 0) * var7), (double) ((float) (par4 + par6) * var8));
-		var9.addVertexWithUV((double) (par1 + par5), (double) (par2 + par6), 0.0D, (double) ((float) (par3 + par5) * var7), (double) ((float) (par4 + par6) * var8));
-		var9.addVertexWithUV((double) (par1 + par5), (double) (par2 + 0), 0.0D, (double) ((float) (par3 + par5) * var7), (double) ((float) (par4 + 0) * var8));
-		var9.addVertexWithUV((double) (par1 + 0), (double) (par2 + 0), 0.0D, (double) ((float) (par3 + 0) * var7), (double) ((float) (par4 + 0) * var8));
+		var9.addVertexWithUV((double) (par1 + 0 + fuck), (double) (par2 + par6 - fuck), (double) 0.0D, (double) ((float) (par3 + 0 + fuck) * var7), (double) ((float) (par4 + par6 - fuck) * var8));
+		var9.addVertexWithUV((double) (par1 + par5 - fuck), (double) (par2 + par6 - fuck), (double) 0.0D, (double) ((float) (par3 + par5 - fuck) * var7), (double) ((float) (par4 + par6 - fuck) * var8));
+		var9.addVertexWithUV((double) (par1 + par5 - fuck), (double) (par2 + 0 + fuck), (double) 0.0D, (double) ((float) (par3 + par5 - fuck) * var7), (double) ((float) (par4 + 0 + fuck) * var8));
+		var9.addVertexWithUV((double) (par1 + 0 + fuck), (double) (par2 + 0 + fuck), (double) 0.0D, (double) ((float) (par3 + 0 + fuck) * var7), (double) ((float) (par4 + 0 + fuck) * var8));
 		var9.draw();
 	}
 

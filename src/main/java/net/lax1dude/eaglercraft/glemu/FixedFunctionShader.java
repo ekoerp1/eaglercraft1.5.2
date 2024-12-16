@@ -2,18 +2,19 @@ package net.lax1dude.eaglercraft.glemu;
 
 import static net.lax1dude.eaglercraft.EaglerAdapter.*;
 
-import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.BufferArrayGL;
-import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.BufferGL;
+import java.util.ArrayList;
+import java.util.List;
+
 import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.ProgramGL;
 import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.ShaderGL;
 import net.lax1dude.eaglercraft.adapter.EaglerAdapterImpl2.UniformGL;
-import net.lax1dude.eaglercraft.glemu.vector.Matrix4f;
 import net.lax1dude.eaglercraft.glemu.vector.Vector2f;
 import net.lax1dude.eaglercraft.glemu.vector.Vector4f;
 
 public class FixedFunctionShader {
 	
 	private static final FixedFunctionShader[] instances = new FixedFunctionShader[4096]; //lol
+	private static final List<FixedFunctionShader> instanceList = new ArrayList<>();
 	
 	public static void refreshCoreGL() {
 		for(int i = 0; i < instances.length; ++i) {
@@ -22,6 +23,7 @@ public class FixedFunctionShader {
 				instances[i] = null;
 			}
 		}
+		instanceList.clear();
 		shaderSource = null;
 	}
 
@@ -92,6 +94,7 @@ public class FixedFunctionShader {
 			s = new FixedFunctionShader(i, CC_a_color, CC_a_normal, CC_a_texture0, CC_a_texture1, CC_TEX_GEN_STRQ, CC_lighting,
 					CC_fog, CC_alphatest, CC_unit0, CC_unit1, CC_anisotropic, CC_swap_rb);
 			instances[i] = s;
+			instanceList.add(s);
 		}
 		return s;
 	}
@@ -117,21 +120,22 @@ public class FixedFunctionShader {
 	private UniformGL u_matrix_t = null;
 	
 	private UniformGL u_fogColor = null;
-	private UniformGL u_fogMode = null;
-	private UniformGL u_fogStart = null;
-	private UniformGL u_fogEnd = null;
-	private UniformGL u_fogDensity = null;
-	private UniformGL u_fogPremultiply = null;
+	//private UniformGL u_fogMode = null;
+	//private UniformGL u_fogStart = null;
+	//private UniformGL u_fogEnd = null;
+	//private UniformGL u_fogDensity = null;
+	private UniformGL u_fogParam = null;
 
 	private UniformGL u_colorUniform = null;
 	private UniformGL u_normalUniform = null;
 	
 	private UniformGL u_alphaTestF = null;
 
-	private UniformGL u_textureGenS_M = null;
-	private UniformGL u_textureGenT_M = null;
-	private UniformGL u_textureGenR_M = null;
-	private UniformGL u_textureGenQ_M = null;
+	//private UniformGL u_textureGenS_M = null;
+	//private UniformGL u_textureGenT_M = null;
+	//private UniformGL u_textureGenR_M = null;
+	//private UniformGL u_textureGenQ_M = null;
+	private UniformGL u_textureGen_M = null;
 	private UniformGL u_textureGenS_V = null;
 	private UniformGL u_textureGenT_V = null;
 	private UniformGL u_textureGenR_V = null;
@@ -154,8 +158,7 @@ public class FixedFunctionShader {
 	
 	private final int attributeIndexesToEnable;
 
-	public final BufferArrayGL genericArray;
-	public final BufferGL genericBuffer;
+	public final StreamBuffer streamBuffer;
 	public boolean bufferIsInitialized = false;
 	
 	private FixedFunctionShader(int j, boolean CC_a_color, boolean CC_a_normal, boolean CC_a_texture0, boolean CC_a_texture1, boolean CC_TEX_GEN_STRQ, boolean CC_lighting, 
@@ -274,11 +277,11 @@ public class FixedFunctionShader {
 		
 		if(enable_fog) {
 			u_fogColor = _wglGetUniformLocation(globject, "fogColor");
-			u_fogMode = _wglGetUniformLocation(globject, "fogMode");
-			u_fogStart = _wglGetUniformLocation(globject, "fogStart");
-			u_fogEnd = _wglGetUniformLocation(globject, "fogEnd");
-			u_fogDensity = _wglGetUniformLocation(globject, "fogDensity");
-			u_fogPremultiply = _wglGetUniformLocation(globject, "fogPremultiply");
+			//u_fogMode = _wglGetUniformLocation(globject, "fogMode");
+			//u_fogStart = _wglGetUniformLocation(globject, "fogStart");
+			//u_fogEnd = _wglGetUniformLocation(globject, "fogEnd");
+			//u_fogDensity = _wglGetUniformLocation(globject, "fogDensity");
+			u_fogParam = _wglGetUniformLocation(globject, "fogParam");
 		}
 		
 		if(enable_alphatest) {
@@ -286,10 +289,11 @@ public class FixedFunctionShader {
 		}
 		
 		if(enable_TEX_GEN_STRQ) {
-			u_textureGenS_M = _wglGetUniformLocation(globject, "textureGenS_M");
-			u_textureGenT_M = _wglGetUniformLocation(globject, "textureGenT_M");
-			u_textureGenR_M = _wglGetUniformLocation(globject, "textureGenR_M");
-			u_textureGenQ_M = _wglGetUniformLocation(globject, "textureGenQ_M");
+			//u_textureGenS_M = _wglGetUniformLocation(globject, "textureGenS_M");
+			//u_textureGenT_M = _wglGetUniformLocation(globject, "textureGenT_M");
+			//u_textureGenR_M = _wglGetUniformLocation(globject, "textureGenR_M");
+			//u_textureGenQ_M = _wglGetUniformLocation(globject, "textureGenQ_M");
+			u_textureGen_M = _wglGetUniformLocation(globject, "textureGen_M");
 			u_textureGenS_V = _wglGetUniformLocation(globject, "textureGenS_V");
 			u_textureGenT_V = _wglGetUniformLocation(globject, "textureGenT_V");
 			u_textureGenR_V = _wglGetUniformLocation(globject, "textureGenR_V");
@@ -306,15 +310,15 @@ public class FixedFunctionShader {
 		
 		u_texCoordV0 = _wglGetUniformLocation(globject, "texCoordV0");
 		u_texCoordV1 = _wglGetUniformLocation(globject, "texCoordV1");
-		
-		genericArray = _wglCreateVertexArray();
-		genericBuffer = _wglCreateBuffer();
-		_wglBindVertexArray(genericArray);
-		_wglBindBuffer(_wGL_ARRAY_BUFFER, genericBuffer);
-		setupArrayForProgram();
+	
+		streamBuffer = new StreamBuffer(0x8000, 3, 8, (vertexArray, vertexBuffer) -> {
+			_wglBindVertexArray0(vertexArray);
+			_wglBindBuffer(_wGL_ARRAY_BUFFER, vertexBuffer);
+			setupArrayForProgram();
+		});
 		
 	}
-	
+
 	public void setupArrayForProgram() {
 		_wglEnableVertexAttribArray(a_position);
 		_wglVertexAttribPointer(a_position, 3, _wGL_FLOAT, false, 32, 0);
@@ -335,174 +339,297 @@ public class FixedFunctionShader {
 			_wglVertexAttribPointer(a_texture1, 2, _wGL_SHORT, false, 32, 28);
 		}
 	}
-	
+
 	public void useProgram() {
 		_wglUseProgram(globject);
 	}
-	
+
 	public void unuseProgram() {
 		
 	}
 
-	private float[] modelBuffer = new float[16];
-	private float[] projectionBuffer = new float[16];
-	private float[] textureBuffer = new float[16];
+	public static void optimize() {
+		FixedFunctionShader pp;
+		for(int i = 0, l = instanceList.size(); i < l; ++i) {
+			instanceList.get(i).streamBuffer.optimize();
+		}
+	}
 
-	private Matrix4f modelMatrix = (Matrix4f) new Matrix4f().setZero();
-	private Matrix4f projectionMatrix = (Matrix4f) new Matrix4f().setZero();
-	private Matrix4f textureMatrix = (Matrix4f) new Matrix4f().setZero();
+	private float[] matBuffer = new float[16];
+
 	private Vector4f light0Pos = new Vector4f();
 	private Vector4f light1Pos = new Vector4f();
 	private Vector2f anisotropicFix = new Vector2f(0.0f, 0.0f);
-	
-	public void setAnisotropicFix(float x, float y) {
-		if(anisotropicFix.x != x || anisotropicFix.y != y) {
-			anisotropicFix.x = x;
-			anisotropicFix.y = y;
-			_wglUniform2f(u_anisotropic_fix, x, y);
-		}
-	}
-
-	public void setModelMatrix(Matrix4f mat) {
-		if(!mat.equals(modelMatrix)) {
-			modelMatrix.load(mat).store(modelBuffer);
-			_wglUniformMat4fv(u_matrix_m, modelBuffer);
-		}
-	}
-	public void setProjectionMatrix(Matrix4f mat) {
-		if(!mat.equals(projectionMatrix)) {
-			projectionMatrix.load(mat).store(projectionBuffer);
-			_wglUniformMat4fv(u_matrix_p, projectionBuffer);
-		}
-	}
-	public void setTextureMatrix(Matrix4f mat) {
-		if(!mat.equals(textureMatrix)) {
-			textureMatrix.load(mat).store(textureBuffer);
-			_wglUniformMat4fv(u_matrix_t, textureBuffer);
-		}
-	}
-	public void setLightPositions(Vector4f pos0, Vector4f pos1) {
-		if(!pos0.equals(light0Pos) || !pos1.equals(light1Pos)) {
-			light0Pos.set(pos0);
-			light1Pos.set(pos1);
-			_wglUniform3f(u_light0Pos, light0Pos.x, light0Pos.y, light0Pos.z);
-			_wglUniform3f(u_light1Pos, light1Pos.x, light1Pos.y, light1Pos.z);
-		}
-	}
 
 	private int fogMode = 0;
-	public void setFogMode(int mode) {
-		if(fogMode != mode) {
-			fogMode = mode;
-			_wglUniform1i(u_fogMode, mode % 2);
-			_wglUniform1f(u_fogPremultiply, mode / 2);
-		}
-	}
 
 	private float fogColorR = 0.0f;
 	private float fogColorG = 0.0f;
 	private float fogColorB = 0.0f;
 	private float fogColorA = 0.0f;
-	public void setFogColor(float r, float g, float b, float a) {
-		if(fogColorR != r || fogColorG != g || fogColorB != b || fogColorA != a) {
-			fogColorR = r;
-			fogColorG = g;
-			fogColorB = b;
-			fogColorA = a;
-			_wglUniform4f(u_fogColor, fogColorR, fogColorG, fogColorB, fogColorA);
-		}
-	}
 
 	private float fogStart = 0.0f;
 	private float fogEnd = 0.0f;
-	public void setFogStartEnd(float s, float e) {
-		if(fogStart != s || fogEnd != e) {
-			fogStart = s;
-			fogEnd = e;
-			_wglUniform1f(u_fogStart, fogStart);
-			_wglUniform1f(u_fogEnd, fogEnd);
-		}
-	}
 
 	private float fogDensity = 0.0f;
-	public void setFogDensity(float d) {
-		if(fogDensity != d) {
-			fogDensity = d;
-			_wglUniform1f(u_fogDensity, fogDensity);
-		}
-	}
-	
+
 	private float alphaTestValue = 0.0f;
-	public void setAlphaTest(float limit) {
-		if(alphaTestValue != limit) {
-			alphaTestValue = limit;
-			_wglUniform1f(u_alphaTestF, alphaTestValue);
-		}
-	}
 
 	private float tex0x = 0.0f;
 	private float tex0y = 0.0f;
-	public void setTex0Coords(float x, float y) {
-		if(tex0x != x || tex0y != y) {
-			tex0x = x;
-			tex0y = y;
-			_wglUniform2f(u_texCoordV0, tex0x, tex0y);
-		}
-	}
 	
 	private float tex1x = 0.0f;
 	private float tex1y = 0.0f;
-	public void setTex1Coords(float x, float y) {
-		if(tex1x != x || tex1y != y) {
-			tex1x = x;
-			tex1y = y;
-			_wglUniform2f(u_texCoordV1, tex1x, tex1y);
-		}
-	}
-	
-	public void setTexGenS(int plane, float x, float y, float z, float w) {
-		_wglUniform1i(u_textureGenS_M, plane);
-		_wglUniform4f(u_textureGenS_V, x, y, z, w);
-	}
-	
-	public void setTexGenT(int plane, float x, float y, float z, float w) {
-		_wglUniform1i(u_textureGenT_M, plane);
-		_wglUniform4f(u_textureGenT_V, x, y, z, w);
-	}
-	
-	public void setTexGenR(int plane, float x, float y, float z, float w) {
-		_wglUniform1i(u_textureGenR_M, plane);
-		_wglUniform4f(u_textureGenR_V, x, y, z, w);
-	}
-	
-	public void setTexGenQ(int plane, float x, float y, float z, float w) {
-		_wglUniform1i(u_textureGenQ_M, plane);
-		_wglUniform4f(u_textureGenQ_V, x, y, z, w);
-	}
 
 	private float colorUniformR = 0.0f;
 	private float colorUniformG = 0.0f;
 	private float colorUniformB = 0.0f;
 	private float colorUniformA = 0.0f;
-	public void setColor(float r, float g, float b, float a) {
-		if(colorUniformR != r || colorUniformG != g || colorUniformB != b || colorUniformA != a) {
-			colorUniformR = r;
-			colorUniformG = g;
-			colorUniformB = b;
-			colorUniformA = a;
-			_wglUniform4f(u_colorUniform, colorUniformR, colorUniformG, colorUniformB, colorUniformA);
-		}
-	}
 
 	private float normalUniformX = 0.0f;
 	private float normalUniformY = 0.0f;
 	private float normalUniformZ = 0.0f;
-	public void setNormal(float x, float y, float z) {
-		if(normalUniformX != x || normalUniformY != y || normalUniformZ != z) {
-			normalUniformX = x;
-			normalUniformY = y;
-			normalUniformZ = z;
-			_wglUniform3f(u_normalUniform, normalUniformX, normalUniformY, normalUniformZ);
+
+	private int anisotropicFixSerial = -1;
+	private int colorSerial = -1;
+	private int normalSerial = -1;
+	private int tex0Serial = -1;
+	private int tex1Serial = -1;
+	private int texPlaneSerial = -1;
+	private int texSSerial = -1;
+	private int texTSerial = -1;
+	private int texRSerial = -1;
+	private int texQSerial = -1;
+	private int fogColorSerial = -1;
+	private int fogCfgSerial = -1;
+	private int matModelSerialCounter = -1;
+	private int matProjSerialCounter = -1;
+	private int matTexSerialCounter = -1;
+	private int lightPos0Serial = -1;
+	private int lightPos1Serial = -1;
+
+	private int texS_plane = -1;
+	private float texS_X = -999.0f;
+	private float texS_Y = -999.0f;
+	private float texS_Z = -999.0f;
+	private float texS_W = -999.0f;
+
+	private int texT_plane = -1;
+	private float texT_X = -999.0f;
+	private float texT_Y = -999.0f;
+	private float texT_Z = -999.0f;
+	private float texT_W = -999.0f;
+
+	private int texR_plane = -1;
+	private float texR_X = -999.0f;
+	private float texR_Y = -999.0f;
+	private float texR_Z = -999.0f;
+	private float texR_W = -999.0f;
+
+	private int texQ_plane = -1;
+	private float texQ_X = -999.0f;
+	private float texQ_Y = -999.0f;
+	private float texQ_Z = -999.0f;
+	private float texQ_W = -999.0f;
+
+	public void update() {
+		if(anisotropicFixSerial != EaglerAdapterGL30.anisotropicFixSerial) {
+			float x = EaglerAdapterGL30.anisotropicFixX;
+			float y = EaglerAdapterGL30.anisotropicFixY;
+			anisotropicFixSerial = EaglerAdapterGL30.anisotropicFixSerial;
+			if(anisotropicFix.x != x || anisotropicFix.y != y) {
+				anisotropicFix.x = x;
+				anisotropicFix.y = y;
+				_wglUniform2f(u_anisotropic_fix, x, y);
+			}
+		}
+		if(colorSerial != EaglerAdapterGL30.colorSerial) {
+			float r = EaglerAdapterGL30.colorR;
+			float g = EaglerAdapterGL30.colorG;
+			float b = EaglerAdapterGL30.colorB;
+			float a = EaglerAdapterGL30.colorA;
+			colorSerial = EaglerAdapterGL30.colorSerial;
+			if(colorUniformR != r || colorUniformG != g || colorUniformB != b || colorUniformA != a) {
+				colorUniformR = r;
+				colorUniformG = g;
+				colorUniformB = b;
+				colorUniformA = a;
+				_wglUniform4f(u_colorUniform, r, g, b, a);
+			}
+		}
+		if(normalSerial != EaglerAdapterGL30.normalSerial) {
+			float x = EaglerAdapterGL30.normalX;
+			float y = EaglerAdapterGL30.normalY;
+			float z = EaglerAdapterGL30.normalZ;
+			normalSerial = EaglerAdapterGL30.normalSerial;
+			if(normalUniformX != x || normalUniformY != y || normalUniformZ != z) {
+				normalUniformX = x;
+				normalUniformY = y;
+				normalUniformZ = z;
+				_wglUniform3f(u_normalUniform, x, y, z);
+			}
+		}
+		if(tex0Serial != EaglerAdapterGL30.tex0Serial) {
+			float x = EaglerAdapterGL30.tex0X;
+			float y = EaglerAdapterGL30.tex0Y;
+			tex0Serial = EaglerAdapterGL30.tex0Serial;
+			if(tex0x != x || tex0y != y) {
+				tex0x = x;
+				tex0y = y;
+				_wglUniform2f(u_texCoordV0, x, y);
+			}
+		}
+		if(tex1Serial != EaglerAdapterGL30.tex1Serial) {
+			float x = EaglerAdapterGL30.tex1X;
+			float y = EaglerAdapterGL30.tex1Y;
+			tex1Serial = EaglerAdapterGL30.tex1Serial;
+			if(tex1x != x || tex1y != y) {
+				tex1x = x;
+				tex1y = y;
+				_wglUniform2f(u_texCoordV1, x, y);
+			}
+		}
+		if(texPlaneSerial != EaglerAdapterGL30.texPlaneSerial) {
+			int s = EaglerAdapterGL30.texS_plane;
+			int t = EaglerAdapterGL30.texT_plane;
+			int r = EaglerAdapterGL30.texR_plane;
+			int q = EaglerAdapterGL30.texQ_plane;
+			texPlaneSerial = EaglerAdapterGL30.texPlaneSerial;
+			if(texS_plane != s || texT_plane != t || texR_plane != r || texQ_plane != q) {
+				texS_plane = s;
+				texT_plane = t;
+				texR_plane = r;
+				texQ_plane = q;
+				_wglUniform4i(u_textureGen_M, s, t, r, q);
+			}
+		}
+		if(texSSerial != EaglerAdapterGL30.texSSerial) {
+			float x = EaglerAdapterGL30.texS_X;
+			float y = EaglerAdapterGL30.texS_Y;
+			float z = EaglerAdapterGL30.texS_Z;
+			float w = EaglerAdapterGL30.texS_W;
+			texSSerial = EaglerAdapterGL30.texSSerial;
+			if(texS_X != x || texS_Y != y || texS_Z != z || texS_W != w) {
+				texS_X = x;
+				texS_Y = y;
+				texS_Z = z;
+				texS_W = w;
+				_wglUniform4f(u_textureGenS_V, x, y, z, w);
+			}
+		}
+		if(texTSerial != EaglerAdapterGL30.texTSerial) {
+			float x = EaglerAdapterGL30.texT_X;
+			float y = EaglerAdapterGL30.texT_Y;
+			float z = EaglerAdapterGL30.texT_Z;
+			float w = EaglerAdapterGL30.texT_W;
+			texTSerial = EaglerAdapterGL30.texTSerial;
+			if(texT_X != x || texT_Y != y || texT_Z != z || texT_W != w) {
+				texT_X = x;
+				texT_Y = y;
+				texT_Z = z;
+				texT_W = w;
+				_wglUniform4f(u_textureGenT_V, x, y, z, w);
+			}
+		}
+		if(texRSerial != EaglerAdapterGL30.texRSerial) {
+			float x = EaglerAdapterGL30.texR_X;
+			float y = EaglerAdapterGL30.texR_Y;
+			float z = EaglerAdapterGL30.texR_Z;
+			float w = EaglerAdapterGL30.texR_W;
+			texRSerial = EaglerAdapterGL30.texRSerial;
+			if(texR_X != x || texR_Y != y || texR_Z != z || texR_W != w) {
+				texR_X = x;
+				texR_Y = y;
+				texR_Z = z;
+				texR_W = w;
+				_wglUniform4f(u_textureGenR_V, x, y, z, w);
+			}
+		}
+		if(texQSerial != EaglerAdapterGL30.texQSerial) {
+			float x = EaglerAdapterGL30.texQ_X;
+			float y = EaglerAdapterGL30.texQ_Y;
+			float z = EaglerAdapterGL30.texQ_Z;
+			float w = EaglerAdapterGL30.texQ_W;
+			texQSerial = EaglerAdapterGL30.texQSerial;
+			if(texQ_X != x || texQ_Y != y || texQ_Z != z || texQ_W != w) {
+				texQ_X = x;
+				texQ_Y = y;
+				texQ_Z = z;
+				texQ_W = w;
+				_wglUniform4f(u_textureGenQ_V, x, y, z, w);
+			}
+		}
+		if(fogColorSerial != EaglerAdapterGL30.fogColorSerial) {
+			float r = EaglerAdapterGL30.fogColorR;
+			float g = EaglerAdapterGL30.fogColorG;
+			float b = EaglerAdapterGL30.fogColorB;
+			float a = EaglerAdapterGL30.fogColorA;
+			fogColorSerial = EaglerAdapterGL30.fogColorSerial;
+			if(fogColorR != r || fogColorG != g || fogColorB != b || fogColorA != a) {
+				fogColorR = r;
+				fogColorG = g;
+				fogColorB = b;
+				fogColorA = a;
+				_wglUniform4f(u_fogColor, r, g, b, a);
+			}
+		}
+		if(fogCfgSerial != EaglerAdapterGL30.fogCfgSerial) {
+			int fogModex = EaglerAdapterGL30.fogMode;
+			float fogStarty = EaglerAdapterGL30.fogStart;
+			float fogEndz = EaglerAdapterGL30.fogEnd - fogStarty;
+			float fogDensityw = EaglerAdapterGL30.fogDensity;
+			fogCfgSerial = EaglerAdapterGL30.fogCfgSerial;
+			if(fogMode != fogModex || fogStart != fogStarty ||
+					fogEnd != fogEndz || fogDensity != fogDensityw) {
+				fogMode = fogModex;
+				fogStart = fogStarty;
+				fogEnd = fogEndz;
+				fogDensity = fogDensityw;
+				_wglUniform4f(u_fogParam, fogModex, fogStarty, fogEndz, fogDensityw);
+			}
+		}
+		float limit = EaglerAdapterGL30.alphaThresh;
+		if(alphaTestValue != limit) {
+			alphaTestValue = limit;
+			_wglUniform1f(u_alphaTestF, limit);
+		}
+		float[] matCopyBuffer = matBuffer;
+		int i = EaglerAdapterGL30.matModelPointer;
+		int j = EaglerAdapterGL30.matModelVSerial[i];
+		if(matModelSerialCounter != j) {
+			matModelSerialCounter = j;
+			EaglerAdapterGL30.matModelV[i].store(matCopyBuffer);
+			_wglUniformMat4fv(u_matrix_m, matCopyBuffer);
+		}
+		i = EaglerAdapterGL30.matProjPointer;
+		j = EaglerAdapterGL30.matProjVSerial[i];
+		if(matProjSerialCounter != j) {
+			matProjSerialCounter = j;
+			EaglerAdapterGL30.matProjV[i].store(matCopyBuffer);
+			_wglUniformMat4fv(u_matrix_p, matCopyBuffer);
+		}
+		i = EaglerAdapterGL30.matTexPointer;
+		j = EaglerAdapterGL30.matTexVSerial[i];
+		if(matTexSerialCounter != j) {
+			matTexSerialCounter = j;
+			EaglerAdapterGL30.matTexV[i].store(matCopyBuffer);
+			_wglUniformMat4fv(u_matrix_t, matCopyBuffer);
+		}
+		if(lightPos0Serial != EaglerAdapterGL30.lightPos0Serial) {
+			lightPos0Serial = EaglerAdapterGL30.lightPos0Serial;
+			Vector4f pos = EaglerAdapterGL30.lightPos0vec;
+			if(!pos.equals(light0Pos)) {
+				light0Pos.set(pos);
+				_wglUniform3f(u_light0Pos, pos.x, pos.y, pos.z);
+			}
+		}
+		if(lightPos1Serial != EaglerAdapterGL30.lightPos1Serial) {
+			lightPos1Serial = EaglerAdapterGL30.lightPos1Serial;
+			Vector4f pos = EaglerAdapterGL30.lightPos1vec;
+			if(!pos.equals(light1Pos)) {
+				light1Pos.set(pos);
+				_wglUniform3f(u_light1Pos, pos.x, pos.y, pos.z);
+			}
 		}
 	}
 
