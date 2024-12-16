@@ -1,0 +1,47 @@
+import org.teavm.gradle.api.OptimizationLevel
+
+plugins {
+    id "java"
+    id "eclipse"
+    id "org.teavm" version "0.10.2"
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs(
+                "src/main/java",
+                "src/teavm/java",
+                "sp-server/src/ipc/java"
+            )
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    teavm(teavm.libs.jso)
+    teavm(teavm.libs.jsoApis)
+    compileOnly "org.teavm:teavm-core:0.10.2" // workaround for a few hacks
+}
+
+def folder = "javascript"
+def name = "classes.js"
+
+teavm.js {
+    obfuscated = true
+    sourceMap = true
+    targetFileName = "../" + name
+    optimization = OptimizationLevel.AGGRESSIVE
+    outOfProcess = false
+    fastGlobalAnalysis = false
+    processMemory = 512
+    entryPointName = "main"
+    mainClass = "net.lax1dude.eaglercraft.Client"
+    outputDir = file(folder)
+    properties = [ "java.util.TimeZone.autodetect": "true" ]
+    debugInformation = false
+}
